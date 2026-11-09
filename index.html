@@ -1521,7 +1521,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
       const tu_miss = c.tu != null && c.tu < SC.T.tu, tnps_miss = c.tnps_surveys >= 5 && c.tnps != null && c.tnps < SC.T.tnps, ftr_miss = c.ftr != null && c.ftr < SC.T.ftr;
       const misses = [tu_miss, tnps_miss, ftr_miss].filter(Boolean).length;
       return Object.assign({}, row, c, { __inWin, away: false, misses, status: misses === 0 ? 'On target' : misses + ' below target', tu_miss, tnps_miss, ftr_miss,
-        low_sample: c.tnps_surveys < 5, ftr_needed: null, tnps_needed: null, tnps_fails: null, ftr_fails: null, tu_fails: null,
+        low_sample: c.tnps_surveys < 5, ftr_needed: null, tnps_needed: null, tnps_fails: c.detractors, ftr_fails: c.ftr_fail, tu_fails: c.tu_fails,
         mix: 'Installs ' + c.install_share + '%, trouble calls ' + c.tc_share + '%, SROs ' + c.sro_share + '%' });
     });
   };
@@ -1691,6 +1691,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     return { jobs: sum('jobs'), install_share: rate(sum('installs'), mix) ?? 0, tc_share: rate(sum('tcs'), mix) ?? 0, sro_share: rate(sum('sros'), mix) ?? 0,
       ftr: rate(sum('ftr_total') - sum('ftr_fail'), sum('ftr_total')), ftr_total: sum('ftr_total'), ftr_fail: sum('ftr_fail'), installs: sum('installs'), tcs: sum('tcs'), sros: sum('sros'),
       promoters: sum('promoters'), detractors: sum('detractors'), surveys: sum('tnps_surveys'),
+      tu_fails: rows.reduce((a, r) => a + (r.tu_fails_n != null && !isNaN(r.tu_fails_n) ? r.tu_fails_n : Math.max(0, (r.tu_e || 0) - (r.tu_n || 0))), 0),
       repeat: rate(sum('repeat_n'), sum('tcs')), met: rate(sum('met_n'), sum('appts')),
       tu: rate(sum('tu_n'), sum('tu_e')), tnps: rate(sum('promoters') - sum('detractors'), sum('tnps_surveys')), tnps_surveys: sum('tnps_surveys'),
       rework: rate(sum('rework_n'), sum('installs') + sum('tcs')), pht: rate(sum('pht_jobs') - sum('pht_fails'), sum('pht_jobs')), months: new Set(rows.map((r) => r.period_start)).size };
