@@ -169,6 +169,16 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
   .sc-sec-head { display: flex; justify-content: space-between; align-items: end; gap: var(--cds-gap-sm); flex-wrap: wrap; }
   .sc-search { font: inherit; font-size: var(--cds-font-size-caption); padding: var(--cds-pad-xs) var(--cds-pad-sm); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: var(--color-bg); color: var(--color-fg); width: 12rem; max-width: 100%; }
   .sc-tablebox { overflow: auto; max-height: 36rem; }
+/* #1 finisher for a fiscal month in view: soft gold glow around the whole row */
+#sc-techtable tbody tr.lead { position: relative; }
+#sc-techtable tbody tr.lead td { background: color-mix(in srgb, var(--gold, #e8b931) 9%, transparent); }
+#sc-techtable tbody tr.lead.click:hover td, #sc-techtable tbody tr.lead.is-picked td { background: color-mix(in srgb, var(--gold, #e8b931) 15%, transparent); }
+#sc-techtable tbody tr.lead::after { content: ''; position: absolute; inset: 2px 2px 3px; border-radius: 10px; pointer-events: none;
+  border: 1px solid color-mix(in srgb, var(--gold, #e8b931) 55%, transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--gold, #e8b931) 30%, transparent), inset 0 0 12px color-mix(in srgb, var(--gold, #e8b931) 16%, transparent);
+  animation: sc-lead-glow 3.2s ease-in-out infinite; }
+@keyframes sc-lead-glow { 50% { box-shadow: 0 0 16px color-mix(in srgb, var(--gold, #e8b931) 42%, transparent), inset 0 0 16px color-mix(in srgb, var(--gold, #e8b931) 22%, transparent); } }
+@media (prefers-reduced-motion: reduce) { #sc-techtable tbody tr.lead::after { animation: none; } }
   .sc-table { width: 100%; border-collapse: collapse; font-size: var(--cds-font-size-body); font-variant-numeric: tabular-nums; }
   .sc-table th { position: sticky; top: 0; background: var(--color-panel); text-align: right; font-weight: var(--cds-font-weight-medium); font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); border-bottom: 1px solid var(--color-border-line); padding: 0; white-space: nowrap; z-index: 1; vertical-align: bottom; }
   .sc-table th:first-child, .sc-table td:first-child, .sc-table th.l, .sc-table td.l { text-align: left; }
@@ -1452,13 +1462,30 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
   /* The tech table over the last K fiscal months: each tech's counts added up, rates and target misses worked out from the totals. */
   const tableRows = (base, K) => {
     const tp = dash.data('tech_periods'); if (K <= 1 || tp.status !== 'ok') return base;
-    const ps = [...new Set(tp.data.map((r) => r.period_start))].sort(), win = ps.slice(-K);
+    const ps = [...new Set(tp.data.map((r) => r.period_start))].sort();
+    return winRows(base, ps.slice(-K));
+  };
+  /* #1 finisher of each fiscal month in the last K months (Dillon, Nov 9): tech_id -> month labels they finished 1st.
+     The current month uses this month's table; earlier months are ranked from that month's own numbers. */
+  const monthLeaders = (base, K) => {
+    const out = new Map(), add = (id, label) => { if (id == null) return; if (!out.has(id)) out.set(id, []); out.get(id).push(label); };
+    const tp = dash.data('tech_periods');
+    const ps = tp.status === 'ok' ? [...new Map(tp.data.map((x) => [x.period_start, x.period_label])).entries()].sort((a, b) => a[0] < b[0] ? -1 : 1) : [];
+    const first = (rows) => (SC.rankTechs(rows).find((r) => r.rank === 1) || {}).tech_id;
+    const curLabel = ps.length ? ps[ps.length - 1][1] : 'this fiscal month';
+    add(first(base), curLabel);
+    ps.slice(-K, -1).reverse().forEach(([start, label]) => add(first(winRows(base, [start]).filter((r) => r.__inWin)), label));
+    return out;
+  };
+  const winRows = (base, win) => {
+    const tp = dash.data('tech_periods');
     return base.map((row) => {
       const c = compile(tp.data.filter((r) => r.tech_id === row.tech_id && win.includes(r.period_start)));
       if (!c.jobs) return row;
+      const __inWin = true;
       const tu_miss = c.tu != null && c.tu < SC.T.tu, tnps_miss = c.tnps_surveys >= 5 && c.tnps != null && c.tnps < SC.T.tnps, ftr_miss = c.ftr != null && c.ftr < SC.T.ftr;
       const misses = [tu_miss, tnps_miss, ftr_miss].filter(Boolean).length;
-      return Object.assign({}, row, c, { away: false, misses, status: misses === 0 ? 'On target' : misses + ' below target', tu_miss, tnps_miss, ftr_miss,
+      return Object.assign({}, row, c, { __inWin, away: false, misses, status: misses === 0 ? 'On target' : misses + ' below target', tu_miss, tnps_miss, ftr_miss,
         low_sample: c.tnps_surveys < 5, ftr_needed: null, tnps_needed: null, tnps_fails: null, ftr_fails: null, tu_fails: null,
         mix: 'Installs ' + c.install_share + '%, trouble calls ' + c.tc_share + '%, SROs ' + c.sro_share + '%' });
     });
@@ -1520,6 +1547,7 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
     });
     /* Trend arrows: each tech's rate this timeframe vs the same length just before it (the month before, for 1 month). */
     const tpd = dash.data('tech_periods'), K = SC.tspan || 1;
+    const leaders = monthLeaders(d0.data, K);
     const allPs = tpd.status === 'ok' ? [...new Map(tpd.data.map((x) => [x.period_start, x.period_label])).entries()].sort((a, b) => a[0] < b[0] ? -1 : 1) : [];
     const prevWin = allPs.slice(-2 * K, -K), prevSet = new Set(prevWin.map((x) => x[0]));
     const prevLabel = K === 1 && prevWin.length ? prevWin[0][1] : 'the ' + K + ' months before';
@@ -1533,8 +1561,9 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
     for (const r of rows) {
       const pv = r.away ? null : prevOf(r.tech_id), pc = pv && pv.jobs ? pv : null;
       const tr = document.createElement('tr');
-      tr.className = 'click' + (r.tech_id === SC.picked ? ' is-picked' : '') + (r.away ? ' away' : '');
+      tr.className = 'click' + (r.tech_id === SC.picked ? ' is-picked' : '') + (r.away ? ' away' : '') + (leaders.has(r.tech_id) ? ' lead' : '');
       if (r.away) tr.title = 'Last jobs in ' + r.last_label + '; numbers shown are from then.';
+      if (leaders.has(r.tech_id)) tr.title = '1st for ' + leaders.get(r.tech_id).join(', ') + (tr.title ? ' · ' + tr.title : '');
       tr.dataset.key = r.tech_id; tr.tabIndex = 0;
       const td = (text, cls) => { const c = document.createElement('td'); if (cls) c.className = cls; if (text != null) c.textContent = text; tr.appendChild(c); return c; };
       { const rk = td(r.rank ? String(r.rank) : '—', 'rk l hide-sm'); if (r.score != null) rk.title = d3.format('.1f')(r.score) + ' pts'; }
