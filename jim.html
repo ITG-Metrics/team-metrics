@@ -1547,7 +1547,7 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
     });
     /* Trend arrows: each tech's rate this timeframe vs the same length just before it (the month before, for 1 month). */
     const tpd = dash.data('tech_periods'), K = SC.tspan || 1;
-    const leaders = monthLeaders(d0.data, K);
+    const leaders = K === 1 ? monthLeaders(d0.data, 1) : new Map(); // glow only on this fiscal month's #1, and only when the slider is on this month alone
     const allPs = tpd.status === 'ok' ? [...new Map(tpd.data.map((x) => [x.period_start, x.period_label])).entries()].sort((a, b) => a[0] < b[0] ? -1 : 1) : [];
     const prevWin = allPs.slice(-2 * K, -K), prevSet = new Set(prevWin.map((x) => x[0]));
     const prevLabel = K === 1 && prevWin.length ? prevWin[0][1] : 'the ' + K + ' months before';
