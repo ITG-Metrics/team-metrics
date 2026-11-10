@@ -557,6 +557,45 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   #sc-techtable th[data-col="rank"] { width: 1%; white-space: nowrap; }
   #sc-techtable .rk-sm { display: none; }
   @media (max-width: 44rem) { #sc-techtable .rk-sm { display: inline-block; min-width: 1.1em; font-weight: 700; color: var(--color-fg-muted); text-align: right; } }
+
+/* Tech card (Dillon, Nov 10): everything about one tech in one place: rank, what they need, their surveys and QCs. */
+#tech-detail .sc-needs { display: none; }
+.sc-tcard { display: grid; gap: 14px; margin: 4px 0 18px; padding: 16px; border: 1px solid var(--color-border-line); border-radius: 14px; background: color-mix(in srgb, var(--color-fg) 3%, var(--color-panel)); }
+.sc-tcard:empty { display: none; }
+.sc-tc-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.sc-tc-head .who { display: grid; gap: 2px; min-width: 0; }
+.sc-tc-head .who b { font-size: 20px; }
+.sc-tc-head .who .nm { color: var(--color-fg-muted); font-size: var(--cds-font-size-body); }
+.sc-tc-head .rk { margin-left: auto; text-align: right; display: grid; gap: 4px; justify-items: end; }
+.sc-tc-head .rk b { font-size: 26px; line-height: 1; font-variant-numeric: tabular-nums; }
+.sc-tc-head .rk span { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.sc-tc-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.sc-tc-kpi { border: 1px solid var(--color-border-line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 4px; background: var(--color-panel); border-left: 4px solid var(--color-ok); }
+.sc-tc-kpi.miss { border-left-color: var(--color-bad); }
+.sc-tc-kpi.dim { border-left-color: var(--color-border-line); }
+.sc-tc-kpi .k { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.sc-tc-kpi .v { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.sc-tc-kpi.miss .v { color: var(--color-bad); } .sc-tc-kpi:not(.miss):not(.dim) .v { color: var(--color-ok); }
+.sc-tc-kpi .need { font-size: var(--cds-font-size-caption); line-height: 1.35; }
+.sc-tc-kpi.miss .need { color: var(--color-fg); font-weight: 600; }
+.sc-tc-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+.sc-tc-box h4 { margin: 0 0 6px; font-size: var(--cds-font-size-body); }
+.sc-tc-box .sum { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); margin-bottom: 6px; }
+.sc-tc-list { display: grid; gap: 6px; }
+.sc-tc-item { border: 1px solid var(--color-border-line); border-left: 3px solid var(--color-ok); border-radius: 8px; padding: 7px 10px; background: var(--color-panel); display: grid; gap: 3px; }
+.sc-tc-item.bad { border-left-color: var(--color-bad); } .sc-tc-item.mid { border-left-color: var(--color-warn); }
+.sc-tc-item .m { display: flex; justify-content: space-between; gap: 8px; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.sc-tc-item .m b { color: var(--color-fg); }
+.sc-tc-item .q { font-size: var(--cds-font-size-body); line-height: 1.35; }
+.sc-tc-item .q.none { color: var(--color-fg-muted); font-style: italic; font-size: var(--cds-font-size-caption); }
+.sc-tc-thumbs { display: flex; gap: 6px; flex-wrap: wrap; }
+.sc-tc-thumbs button { all: unset; cursor: pointer; width: 54px; height: 54px; border-radius: 6px; overflow: hidden; border: 1px solid var(--color-border-line); }
+.sc-tc-thumbs button:focus-visible { outline: 2px solid var(--cds-chart-axis); }
+.sc-tc-thumbs img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sc-tc-empty { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.sc-tc-link { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.sc-tc-link button { all: unset; cursor: pointer; text-decoration: underline; }
+@media (max-width: 44rem) { .sc-tc-head .rk { margin-left: 0; width: 100%; justify-items: start; text-align: left; grid-auto-flow: column; justify-content: start; align-items: baseline; gap: 6px; } .sc-tcard { padding: 12px; } .sc-tc-kpis { grid-template-columns: 1fr; } .sc-tc-cols { grid-template-columns: 1fr; } .sc-tc-head .rk b { font-size: 22px; } }
   .sc-mk-table td.tech .nm { display: block; color: var(--color-fg-muted); font-weight: 400; font-size: var(--cds-font-size-caption); line-height: 1.25; }
   .sc-mk-table td.sup { white-space: normal; min-width: 7rem; line-height: 1.25; }
   .sc-mk-table th button { white-space: normal; line-height: 1.2; width: 100%; box-sizing: border-box; }
@@ -793,6 +832,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
         </div>
         <div class="sc-pickav"><span data-draw="pickav" data-source="tech_table"></span><select class="dash-select" id="sc-techpick" data-draw="techpick" data-source="tech_table" aria-label="Tech"></select></div>
       </div>
+      <div class="sc-tcard" id="sc-tcard" data-draw="techcard" data-source="tech_table tech_periods feedback qc"></div>
       <div class="sc-span" data-draw="span" data-span="span" data-source="tech_periods"></div>
       <div class="sc-facts" data-draw="facts" data-source="tech_table team_now tech_periods"></div>
       <p class="sc-needs" data-draw="needs" data-source="tech_table">—</p>
@@ -1489,7 +1529,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     const li = vals.length - 1;
     if (vals[li] != null) svg.append('circle').attr('cx', x(li)).attr('cy', y(vals[li])).attr('r', 2.5).attr('fill', vals[li] < SC.T.ftr ? 'var(--cds-chart-status-critical)' : dash.colors[0]);
   };
-  const pickTech = (id) => { SC.picked = id; dash.draw('techrows'); dash.draw('techpick'); dash.draw('pickav'); dash.draw('detail'); dash.draw('facts'); dash.draw('needs'); dash.draw('needsnps'); dash.draw('notes'); window.SC.notesEmpty();
+  const pickTech = (id) => { SC.picked = id; dash.draw('techrows'); dash.draw('techpick'); dash.draw('pickav'); dash.draw('detail'); dash.draw('facts'); dash.draw('needs'); dash.draw('needsnps'); dash.draw('techcard'); dash.draw('notes'); window.SC.notesEmpty();
     const t = dash.data('tech_table'), r = t.status === 'ok' ? t.data.find((x) => x.tech_id === id) : null;
     if (r && !r.away && r.misses === 0) { const f = document.querySelector('[data-draw="facts"]'); SC.pop(f && f.parentElement); } };
   const defaultPick = (rows) => rows.filter((r) => !r.away).sort((a, b) => b.misses - a.misses || a.ftr - b.ftr)[0]?.tech_id || null;
@@ -2247,6 +2287,66 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     dlg.addEventListener('close', () => { dlg.remove(); if (opener) opener.focus(); });
     dlg.append(bar, stage, cnt); document.body.appendChild(dlg); show(0); dlg.showModal(); x.focus();
   };
+  /* Tech card (Dillon, Nov 10): rank, what the tech needs this month, their surveys and QCs, in one place. Open one with ?t=<tech id>. */
+  dash.draw('techcard', (el) => {
+    el.replaceChildren(); const t = dash.data('tech_table'); if (t.status !== 'ok' || !SC.picked) return;
+    const r = t.data.find((x) => x.tech_id === SC.picked); if (!r) return; const id = String(r.tech_id);
+    const head = fbEl('div', 'sc-tc-head'); head.appendChild(SC.av(id, 64));
+    const who = fbEl('div', 'who'); who.append(fbEl('b', null, 'Tech ' + id)); if (SC.names && SC.names[id]) who.append(fbEl('span', 'nm', SC.names[id]));
+    const pill = fbEl('span', 'sc-pill ' + (r.away ? '' : r.misses === 0 ? 'ok' : r.misses === 1 ? 'warn' : 'bad'), r.status); pill.style.justifySelf = 'start'; who.append(pill); head.appendChild(who);
+    try { const K = SC.tspan || 1, rows = SC.rankTechs(tableRows(t.data, K)), me = rows.find((x) => x.tech_id === r.tech_id), n = rows.filter((x) => x.rank).length;
+      const rk = fbEl('div', 'rk'); rk.append(fbEl('span', null, K > 1 ? 'Rank, last ' + K + ' months' : 'Rank this month'), fbEl('b', null, me && me.rank ? '#' + me.rank : '—'), fbEl('span', null, me && me.rank ? 'of ' + n + ' techs' : 'not ranked'));
+      head.appendChild(rk); } catch (e) { console.error('techcard rank', e); }
+    el.appendChild(head);
+    /* What they need this month */
+    const kp = fbEl('div', 'sc-tc-kpis');
+    const kpi = (k, v, cls, need) => { const d = fbEl('div', 'sc-tc-kpi ' + cls); d.append(fbEl('span', 'k', k), fbEl('span', 'v', v), fbEl('span', 'need', need)); kp.appendChild(d); };
+    if (r.away) { kpi('This month', '—', 'dim', 'No jobs this fiscal month. Numbers below are from ' + r.last_label + '.'); }
+    else {
+      kpi('FTR · target ' + SC.tgt(SC.T.ftr), SC.pct(r.ftr), r.ftr_miss ? 'miss' : '', r.ftr_needed > 0 ? r.ftr_needed + ' first-time fixes in a row, no repeats, to reach ' + SC.tgt(SC.T.ftr) + '.' + (r.ftr_fails != null ? ' ' + r.ftr_fails + (r.ftr_fails === 1 ? ' FTR fail' : ' FTR fails') + ' so far.' : '') : 'On target' + (r.ftr_fails != null ? ' · ' + r.ftr_fails + (r.ftr_fails === 1 ? ' fail' : ' fails') + ' on ' + r.ftr_jobs + ' jobs.' : '.'));
+      const pas = (r.tnps_surveys || 0) - (r.promoters || 0) - (r.detractors || 0);
+      kpi('tNPS · target ' + SC.tgt(SC.T.tnps), r.tnps_surveys ? SC.pct(r.tnps) : '—', !r.tnps_surveys ? 'dim' : r.tnps_miss ? 'miss' : (r.tnps_needed > 0 ? 'miss' : ''),
+        !r.tnps_surveys ? 'No surveys yet this month.' : r.tnps_needed > 0 ? r.tnps_needed + ' promoter surveys (9–10) in a row to reach ' + SC.tgt(SC.T.tnps) + '. ' + r.tnps_surveys + ' surveys: ' + (r.detractors || 0) + ((r.detractors || 0) === 1 ? ' detractor, ' : ' detractors, ') + pas + (pas === 1 ? ' passive.' : ' passives.') : 'On target on ' + r.tnps_surveys + ' surveys.');
+      kpi('Tool usage · target ' + SC.tgt(SC.T.tu), SC.pct(r.tu), r.tu_miss ? 'miss' : '', r.tu_miss ? (r.tu_fails ? r.tu_fails + ' missed ' + (r.tu_fails === 1 ? 'job' : 'jobs') + ' so far. Run the tool on every eligible job.' : 'Run the tool on every eligible job.') : 'On target' + (r.tu_fails ? ' · ' + r.tu_fails + ' missed.' : '.'));
+    }
+    el.appendChild(kp);
+    const cols = fbEl('div', 'sc-tc-cols');
+    /* Their surveys this fiscal month */
+    const fb = dash.data('feedback'), fbox = fbEl('div', 'sc-tc-box'); fbox.appendChild(fbEl('h4', null, 'Customer surveys'));
+    if (fb.status === 'ok') {
+      const mine = fb.data.filter((x) => String(x.tech_id) === id && x.score !== '' && x.score != null).sort((a, b) => a.date < b.date ? 1 : -1);
+      const pro = mine.filter((x) => +x.score >= 9).length, det = mine.filter((x) => +x.score <= 6).length;
+      fbox.appendChild(fbEl('div', 'sum', mine.length ? mine.length + ' this month · ' + pro + ' promoters · ' + (mine.length - pro - det) + ' passives · ' + det + (det === 1 ? ' detractor' : ' detractors') : 'No surveys yet this month.'));
+      const ls = fbEl('div', 'sc-tc-list');
+      const show = mine.filter((x) => +x.score <= 8).concat(mine.filter((x) => +x.score > 8 && x.comment)).slice(0, 5);
+      show.forEach((x) => { const s = +x.score, it = fbEl('div', 'sc-tc-item' + (s <= 6 ? ' bad' : s <= 8 ? ' mid' : ''));
+        const m = fbEl('div', 'm'); m.append(fbEl('span', null, fbmd(String(x.date))), fbEl('b', null, s + '/10')); it.appendChild(m);
+        const c = String(x.comment || '').trim(); const q = fbEl('div', 'q' + (c ? '' : ' none'), c ? '“' + c.charAt(0).toUpperCase() + c.slice(1) + '”' : 'No comment left'); if (c) q.dataset.noTr = '1'; it.appendChild(q); ls.appendChild(it); });
+      if (show.length) fbox.appendChild(ls);
+      if (mine.length > show.length) fbox.appendChild(fbEl('div', 'sc-tc-empty', (mine.length - show.length) + ' more ' + (mine.length - show.length === 1 ? 'survey' : 'surveys') + ' on the Feedback tab.'));
+    } else fbox.appendChild(fbEl('div', 'sc-tc-empty', 'Survey data not loaded.'));
+    cols.appendChild(fbox);
+    /* Their QCs, last 30 days */
+    const qbox = fbEl('div', 'sc-tc-box'); qbox.appendChild(fbEl('h4', null, 'QCs, last 30 days'));
+    const qs = (qcRows() || []).filter((x) => x.tech === id);
+    if (!qs.length) qbox.appendChild(fbEl('div', 'sc-tc-empty', 'No QCs by other observers in the last 30 days.'));
+    else { qbox.appendChild(fbEl('div', 'sum', qs.length + (qs.length === 1 ? ' QC' : ' QCs') + (qs.some((x) => x.score != null) ? ' · average ' + (qs.filter((x) => x.score != null).reduce((a, x) => a + x.score, 0) / qs.filter((x) => x.score != null).length).toFixed(1) : '')));
+      const ls = fbEl('div', 'sc-tc-list');
+      qs.slice(0, 4).forEach((x) => { const it = fbEl('div', 'sc-tc-item' + (x.alerts ? ' bad' : x.score != null && x.score < 90 ? ' mid' : ''));
+        const m = fbEl('div', 'm'); const w = fbEl('span', null, fbmd(x.date) + ' · ' + x.who); w.dataset.noTr = '1'; m.append(w, fbEl('b', null, (x.score == null ? '—' : x.score) + (x.alerts ? ' · ' + x.alerts + (x.alerts === 1 ? ' alert' : ' alerts') : ''))); it.appendChild(m);
+        if (x.photos.length) { const th = fbEl('div', 'sc-tc-thumbs'); x.photos.slice(0, 6).forEach((src, k) => { const b = fbEl('button'); b.type = 'button'; b.setAttribute('aria-label', 'Open QC photos'); const im = fbEl('img'); im.alt = ''; im.loading = 'lazy'; im.src = src; b.appendChild(im); b.onclick = () => qcGallery(Object.assign({}, x, { photos: x.photos.slice(k).concat(x.photos.slice(0, k)) }), b); th.appendChild(b); }); it.appendChild(th); }
+        ls.appendChild(it); });
+      qbox.appendChild(ls); }
+    cols.appendChild(qbox); el.appendChild(cols);
+    const lk = fbEl('div', 'sc-tc-link'); const cp = fbEl('button', null, 'Copy a link to this tech’s card'); cp.type = 'button';
+    cp.onclick = () => { const u = location.origin + location.pathname + '?t=' + encodeURIComponent(id); try { navigator.clipboard.writeText(u).then(() => { cp.textContent = 'Link copied'; setTimeout(() => { cp.textContent = 'Copy a link to this tech’s card'; }, 1800); }); } catch (e) { prompt('Link', u); } };
+    lk.appendChild(cp); el.appendChild(lk);
+  });
+  /* ?t=<tech id> opens the Techs tab on that tech's card. */
+  { const want = new URLSearchParams(location.search).get('t'); const go = () => { const t = dash.data('tech_table'); if (!want || t.status !== 'ok') return false;
+      const r = t.data.find((x) => String(x.tech_id).toUpperCase() === want.toUpperCase()); if (!r) return true;
+      showPage('techs'); pickTech(r.tech_id); requestAnimationFrame(() => { const c = document.getElementById('tech-detail'); if (c) c.scrollIntoView({ block: 'start' }); }); return true; };
+    if (want && !go()) { let n = 0; const iv = setInterval(() => { if (go() || ++n > 40) clearInterval(iv); }, 150); } }
   /* Photo carousel shared by the QC showcase and the Comcast Field QC's box.
      slides: [{ src, tech?, open() }]; a slide with a tech shows a "Tech ####" badge while it is on screen. */
   const carousel = (el, title, note, slides) => {
