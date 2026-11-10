@@ -2602,6 +2602,12 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   const M = { Jan: 'ene', Feb: 'feb', Mar: 'mar', Apr: 'abr', May: 'may', Jun: 'jun', Jul: 'jul', Aug: 'ago', Sep: 'sep', Oct: 'oct', Nov: 'nov', Dec: 'dic' };
   const mo = (m) => M[m] || m;
   const ES = {
+    /* Tech card (Nov 10) */
+    'Rank this month': 'Puesto este mes', 'not ranked': 'sin puesto', 'Customer surveys': 'Encuestas de clientes', 'QCs, last 30 days': 'QC, últimos 30 días',
+    'No surveys yet this month.': 'Aún no hay encuestas este mes.', 'Copy a link to this tech’s card': 'Copia un enlace a la tarjeta de este técnico', 'Link copied': 'Enlace copiado',
+    'Survey data not loaded.': 'No se cargaron las encuestas.', 'On target.': 'En la meta.', 'Run the tool on every eligible job.': 'Usa la herramienta en cada trabajo que aplique.',
+    'Open QC photos': 'Abrir fotos del QC', 'This month': 'Este mes', 'No QCs by other observers in the last 30 days.': 'No hay QC de otros observadores en los últimos 30 días.',
+
     'Broward & Dade tech scorecard': 'Tablero de técnicos Broward y Dade',
     'of': 'de',
     'techs are meeting all three targets in': 'técnicos cumplen las tres metas en',
@@ -2695,6 +2701,12 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   const MH = { Jan: 'jan', Feb: 'fev', Mar: 'mas', Apr: 'avr', May: 'me', Jun: 'jen', Jul: 'jiy', Aug: 'out', Sep: 'sep', Oct: 'okt', Nov: 'nov', Dec: 'des' };
   const moh = (m) => MH[m] || m;
   const HT = {
+    /* Tech card (Nov 10) */
+    'Rank this month': 'Plas mwa sa a', 'not ranked': 'pa klase', 'Customer surveys': 'Sondaj kliyan', 'QCs, last 30 days': 'QC, dènye 30 jou yo',
+    'No surveys yet this month.': 'Poko gen sondaj mwa sa a.', 'Copy a link to this tech’s card': 'Kopye yon lyen pou kat teknisyen sa a', 'Link copied': 'Lyen an kopye',
+    'Survey data not loaded.': 'Sondaj yo pa chaje.', 'On target.': 'Nan objektif la.', 'Run the tool on every eligible job.': 'Sèvi ak zouti a sou chak travay ki ladan l.',
+    'Open QC photos': 'Louvri foto QC yo', 'This month': 'Mwa sa a', 'No QCs by other observers in the last 30 days.': 'Pa gen QC lòt obsèvatè nan dènye 30 jou yo.',
+
     'Broward & Dade tech scorecard': 'Tablo teknisyen Broward ak Dade',
     'of': 'sou',
     'techs are meeting all three targets in': 'teknisyen ap rive nan twa objektif yo nan',
@@ -2808,6 +2820,23 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   };
   const dateHT = (s) => s.replace(/\b([A-Z][a-z]{2}) (\d{1,2}), (\d{4})\b/g, (_, m, d, y) => `${d} ${moh(m)} ${y}`);
   const RULES_HT = [
+    /* Tech card (Nov 10) */
+    [/^Rank, last (\d+) months$/, (m) => `Plas, dènye ${m[1]} mwa yo`],
+    [/^of (\d+) techs$/, (m) => `sou ${m[1]} teknisyen`],
+    [/^(FTR|tNPS|Tool usage) · target ([\d.]+%)$/, (m) => `${m[1] === 'Tool usage' ? 'Itilizasyon zouti' : m[1]} · objektif ${m[2]}`],
+    [/^(\d+) first-time fixes in a row, no repeats, to reach ([\d.]+%)\.(?: (\d+) FTR fails? so far\.)?$/, (m) => `${m[1]} reparasyon premye fwa youn dèyè lòt, san repetisyon, pou rive ${m[2]}.` + (m[3] ? ` ${m[3]} echèk FTR jiskaprezan.` : '')],
+    [/^On target · (\d+) fails? on (\d+) jobs\.$/, (m) => `Nan objektif la · ${m[1]} echèk sou ${m[2]} travay.`],
+    [/^On target · (\d+) missed\.$/, (m) => `Nan objektif la · ${m[1]} rate.`],
+    [/^(\d+) promoter surveys \(9–10\) in a row to reach ([\d.]+%)\. (\d+) surveys: (\d+) detractors?, (\d+) passives?\.$/, (m) => `${m[1]} sondaj pwomotè (9–10) youn dèyè lòt pou rive ${m[2]}. ${m[3]} sondaj: ${m[4]} detraktè, ${m[5]} pasif.`],
+    [/^On target on (\d+) surveys\.$/, (m) => `Nan objektif la sou ${m[1]} sondaj.`],
+    [/^(\d+) passed tool usage jobs? in a row to get back to ([\d.]+%)\.(?: (\d+) missed jobs? so far\.)?$/, (m) => `${m[1]} travay ki pase itilizasyon zouti youn dèyè lòt pou retounen nan ${m[2]}.` + (m[3] ? ` ${m[3]} travay rate jiskaprezan.` : '')],
+    [/^Run the tool on every eligible job\. (\d+) missed jobs? so far\.$/, (m) => `Sèvi ak zouti a sou chak travay ki ladan l. ${m[1]} travay rate jiskaprezan.`],
+    [/^No jobs this fiscal month\. Numbers below are from (.+)\.$/, (m) => `Pa gen travay mwa fiskal sa a. Chif ki anba yo soti nan ${label(m[1]) || m[1]}.`],
+    [/^(\d+) this month · (\d+) promoters · (\d+) passives · (\d+) detractors?$/, (m) => `${m[1]} mwa sa a · ${m[2]} pwomotè · ${m[3]} pasif · ${m[4]} detraktè`],
+    [/^(\d+) more surveys? on the Feedback tab\.$/, (m) => `${m[1]} lòt sondaj nan onglè Kòmantè a.`],
+    [/^(\d+) QCs?(?: · average ([\d.]+))?$/, (m) => `${m[1]} QC` + (m[2] ? ` · mwayèn ${m[2]}` : '')],
+    [/^(\S+) · (\d+) alerts?$/, (m) => `${m[1]} · ${m[2]} alèt`],
+
     [/^FTR (.+) · tNPS (.+) · ([\d,]+) jobs$/, (m) => `FTR ${m[1]} · tNPS ${m[2]} · ${m[3]} travay`],
     [/^([\d.]+) pts$/, (m) => `${m[1]} pwen`],
     [/^👑 In the lead(?: by ([\d.]+) pts)?$/, (m) => '👑 An tèt' + (m[1] ? ` ak ${m[1]} pwen davans` : '')],
@@ -2886,6 +2915,23 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     return null;
   };
   const RULES = [
+    /* Tech card (Nov 10) */
+    [/^Rank, last (\d+) months$/, (m) => `Puesto, últimos ${m[1]} meses`],
+    [/^of (\d+) techs$/, (m) => `de ${m[1]} técnicos`],
+    [/^(FTR|tNPS|Tool usage) · target ([\d.]+%)$/, (m) => `${m[1] === 'Tool usage' ? 'Uso de herramienta' : m[1]} · meta ${m[2]}`],
+    [/^(\d+) first-time fixes in a row, no repeats, to reach ([\d.]+%)\.(?: (\d+) FTR fails? so far\.)?$/, (m) => `${m[1]} reparaciones a la primera seguidas, sin repeticiones, para llegar a ${m[2]}.` + (m[3] ? ` ${m[3]} ${m[3] === '1' ? 'falla' : 'fallas'} de FTR hasta ahora.` : '')],
+    [/^On target · (\d+) fails? on (\d+) jobs\.$/, (m) => `En la meta · ${m[1]} ${m[1] === '1' ? 'falla' : 'fallas'} en ${m[2]} trabajos.`],
+    [/^On target · (\d+) missed\.$/, (m) => `En la meta · ${m[1]} ${m[1] === '1' ? 'fallado' : 'fallados'}.`],
+    [/^(\d+) promoter surveys \(9–10\) in a row to reach ([\d.]+%)\. (\d+) surveys: (\d+) detractors?, (\d+) passives?\.$/, (m) => `${m[1]} encuestas de promotor (9–10) seguidas para llegar a ${m[2]}. ${m[3]} encuestas: ${m[4]} ${m[4] === '1' ? 'detractor' : 'detractores'}, ${m[5]} ${m[5] === '1' ? 'pasivo' : 'pasivos'}.`],
+    [/^On target on (\d+) surveys\.$/, (m) => `En la meta con ${m[1]} encuestas.`],
+    [/^(\d+) passed tool usage jobs? in a row to get back to ([\d.]+%)\.(?: (\d+) missed jobs? so far\.)?$/, (m) => `${m[1]} ${m[1] === '1' ? 'trabajo aprobado' : 'trabajos aprobados'} de uso de herramienta seguidos para volver a ${m[2]}.` + (m[3] ? ` ${m[3]} ${m[3] === '1' ? 'trabajo fallado' : 'trabajos fallados'} hasta ahora.` : '')],
+    [/^Run the tool on every eligible job\. (\d+) missed jobs? so far\.$/, (m) => `Usa la herramienta en cada trabajo que aplique. ${m[1]} ${m[1] === '1' ? 'trabajo fallado' : 'trabajos fallados'} hasta ahora.`],
+    [/^No jobs this fiscal month\. Numbers below are from (.+)\.$/, (m) => `Sin trabajos este mes fiscal. Los números de abajo son de ${label(m[1]) || m[1]}.`],
+    [/^(\d+) this month · (\d+) promoters · (\d+) passives · (\d+) detractors?$/, (m) => `${m[1]} este mes · ${m[2]} promotores · ${m[3]} pasivos · ${m[4]} ${m[4] === '1' ? 'detractor' : 'detractores'}`],
+    [/^(\d+) more surveys? on the Feedback tab\.$/, (m) => `${m[1]} ${m[1] === '1' ? 'encuesta más' : 'encuestas más'} en la pestaña Comentarios.`],
+    [/^(\d+) QCs?(?: · average ([\d.]+))?$/, (m) => `${m[1]} QC` + (m[2] ? ` · promedio ${m[2]}` : '')],
+    [/^(\S+) · (\d+) alerts?$/, (m) => `${m[1]} · ${m[2]} ${m[2] === '1' ? 'alerta' : 'alertas'}`],
+
     [/^FTR (.+) · tNPS (.+) · ([\d,]+) jobs$/, (m) => `FTR ${m[1]} · tNPS ${m[2]} · ${m[3]} trabajos`],
     [/^([\d.]+) pts$/, (m) => `${m[1]} pts`],
     [/^👑 In the lead(?: by ([\d.]+) pts)?$/, (m) => '👑 Va a la cabeza' + (m[1] ? ` por ${m[1]} pts` : '')],
