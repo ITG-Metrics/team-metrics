@@ -2307,7 +2307,11 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
       const pas = (r.tnps_surveys || 0) - (r.promoters || 0) - (r.detractors || 0);
       kpi('tNPS · target ' + SC.tgt(SC.T.tnps), r.tnps_surveys ? SC.pct(r.tnps) : '—', !r.tnps_surveys ? 'dim' : r.tnps_miss ? 'miss' : (r.tnps_needed > 0 ? 'miss' : ''),
         !r.tnps_surveys ? 'No surveys yet this month.' : r.tnps_needed > 0 ? r.tnps_needed + ' promoter surveys (9–10) in a row to reach ' + SC.tgt(SC.T.tnps) + '. ' + r.tnps_surveys + ' surveys: ' + (r.detractors || 0) + ((r.detractors || 0) === 1 ? ' detractor, ' : ' detractors, ') + pas + (pas === 1 ? ' passive.' : ' passives.') : 'On target on ' + r.tnps_surveys + ' surveys.');
-      kpi('Tool usage · target ' + SC.tgt(SC.T.tu), SC.pct(r.tu), r.tu_miss ? 'miss' : '', r.tu_miss ? (r.tu_fails ? r.tu_fails + ' missed ' + (r.tu_fails === 1 ? 'job' : 'jobs') + ' so far. Run the tool on every eligible job.' : 'Run the tool on every eligible job.') : 'On target' + (r.tu_fails ? ' · ' + r.tu_fails + ' missed.' : '.'));
+      /* Tool usage jobs in a row (passing) to get back to target: (passed + n) / (eligible + n) >= target. */
+      let tuNeed = 0; try { const tp = dash.data('tech_periods'); if (tp.status === 'ok') { const last = tp.data.reduce((a, x) => x.period_start > a ? x.period_start : a, '');
+        const me = tp.data.find((x) => x.tech_id === r.tech_id && x.period_start === last); const T = SC.T.tu;
+        if (me && me.tu_e > 0 && 100 * me.tu_n / me.tu_e < T) tuNeed = Math.max(1, Math.ceil((T * me.tu_e - 100 * me.tu_n) / (100 - T) - 1e-9)); } } catch (e) { console.error('techcard tu', e); }
+      kpi('Tool usage · target ' + SC.tgt(SC.T.tu), SC.pct(r.tu), r.tu_miss ? 'miss' : '', r.tu_miss ? (tuNeed ? tuNeed + ' passed tool usage ' + (tuNeed === 1 ? 'job' : 'jobs') + ' in a row to get back to ' + SC.tgt(SC.T.tu) + '.' : 'Run the tool on every eligible job.') + (r.tu_fails ? ' ' + r.tu_fails + ' missed ' + (r.tu_fails === 1 ? 'job' : 'jobs') + ' so far.' : '') : 'On target' + (r.tu_fails ? ' · ' + r.tu_fails + ' missed.' : '.'));
     }
     el.appendChild(kp);
     const cols = fbEl('div', 'sc-tc-cols');
