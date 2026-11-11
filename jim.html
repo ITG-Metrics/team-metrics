@@ -626,6 +626,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   @media (prefers-reduced-motion: reduce) { .sc-mk-more > summary::before { transition: none; } }
   .sc-mk-table tr.sep td { background: none; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); font-weight: 600; padding-top: var(--cds-pad-lg); }
   /* Repeat jobs (NSR FTR Detail), Nov 10 */
+  #tech-detail { scroll-margin-top: 12px; }
   .sc-trep:empty { display: none; }
   .sc-trep { border-top: 1px solid var(--color-border-line); padding-top: 14px; display: grid; gap: 12px; }
   .sc-rep-head { display: flex; justify-content: space-between; align-items: baseline; gap: 6px 12px; flex-wrap: wrap; }
@@ -1783,8 +1784,10 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
       trend(td(SC.pct(r.pht), 'hide-sm'), r.pht, pc && pc.pht, 'pht');
       trend(td(SC.pct(r.met), 'hide-sm'), r.met, pc && pc.met, 'met');
       spark(td(null, 'hide-sm'), r.ftr_hist);
-      tr.addEventListener('click', () => pickTech(r.tech_id));
-      tr.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pickTech(r.tech_id); } });
+      /* Picking a tech in the table scrolls Tech detail into view (Dillon, Nov 10). */
+      const snap = () => requestAnimationFrame(() => { const c = document.getElementById('tech-detail'); if (c) c.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); });
+      tr.addEventListener('click', () => { pickTech(r.tech_id); snap(); });
+      tr.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pickTech(r.tech_id); snap(); } });
       tbody.appendChild(tr);
     }
   });
@@ -2473,7 +2476,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   const repTop = (rs, f, n) => { const m = new Map(); rs.forEach((r) => { const k = f(r); if (k) m.set(k, (m.get(k) || 0) + 1); });
     return [...m.entries()].sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0]))).slice(0, n || 3); };
   const repKind = (t) => t === 'TC-TC' ? 0 : /^Install/i.test(t) ? 1 : 2;
-  const repBuckets = [['0–7 days', 0, 7], ['8–14 days', 8, 14], ['15–21 days', 15, 21], ['22–30 days', 22, 99]];
+  const repBuckets = [['0–3 days', 0, 3], ['4–10 days', 4, 10], ['11–20 days', 11, 20], ['21–30 days', 21, 99]];
   const repCode = (txt, tag) => { const e = fbEl(tag || 'span', 'sc-rep-code', txt); e.dataset.noTr = '1'; return e; };
   /* Plain-language callouts for one tech's repeats (at most 4). */
   SC.repWatch = (rs, all) => {
@@ -2903,7 +2906,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     'From first visit to repeat': 'De la primera visita a la repetición', 'The job types that come back most, the fixes we used on them, and what the next tech fixed.': 'Los tipos de trabajo que más se repiten, los códigos que usamos en ellos y lo que reparó el siguiente técnico.',
     'Month over month': 'Mes a mes', 'Repeats per tech in each fiscal month, and the job type they repeated on most. The current month is still in progress.': 'Repeticiones por técnico en cada mes fiscal y el tipo de trabajo que más repitieron. El mes actual todavía está en curso.',
     'All repeats': 'Todas las repeticiones', 'Newest first by the date of our visit. Select a row to filter to that tech.': 'Las más recientes primero, por la fecha de nuestra visita. Selecciona una fila para filtrar a ese técnico.',
-    '0–7 days': '0–7 días', '8–14 days': '8–14 días', '15–21 days': '15–21 días', '22–30 days': '22–30 días',
+    '0–3 days': '0–3 días', '4–10 days': '4–10 días', '11–20 days': '11–20 días', '21–30 days': '21–30 días',
     'No fix pair shows up more than once.': 'Ningún par de códigos aparece más de una vez.', 'Repeats started as': 'Repeticiones que empezaron como', 'Our fix on those jobs': 'Nuestro código en esos trabajos',
     'Next tech’s fix': 'Código del siguiente técnico', 'Fix pairs that happened more than once': 'Pares de códigos que pasaron más de una vez', 'Their repeats, newest first': 'Sus repeticiones, las más recientes primero',
     'Show fewer': 'Mostrar menos', 'First visit': 'Primera visita', 'Our fix': 'Nuestro código', 'Came back for': 'Volvió por', 'Fiscal month': 'Mes fiscal', 'Repeat type': 'Tipo de repetición',
@@ -3022,7 +3025,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     'From first visit to repeat': 'Soti nan premye vizit la rive nan repetisyon an', 'The job types that come back most, the fixes we used on them, and what the next tech fixed.': 'Kalite travay ki tounen pi plis, kòd nou te itilize sou yo, ak sa lòt teknisyen an te repare.',
     'Month over month': 'Mwa apre mwa', 'Repeats per tech in each fiscal month, and the job type they repeated on most. The current month is still in progress.': 'Repetisyon pa teknisyen nan chak mwa fiskal, ak kalite travay ki repete pi plis. Mwa sa a poko fini.',
     'All repeats': 'Tout repetisyon yo', 'Newest first by the date of our visit. Select a row to filter to that tech.': 'Pi resan an an premye, dapre dat vizit nou an. Chwazi yon liy pou wè teknisyen sa a sèlman.',
-    '0–7 days': '0–7 jou', '8–14 days': '8–14 jou', '15–21 days': '15–21 jou', '22–30 days': '22–30 jou',
+    '0–3 days': '0–3 jou', '4–10 days': '4–10 jou', '11–20 days': '11–20 jou', '21–30 days': '21–30 jou',
     'No fix pair shows up more than once.': 'Pa gen okenn pè kòd ki parèt plis pase yon fwa.', 'Repeats started as': 'Repetisyon ki te kòmanse kòm', 'Our fix on those jobs': 'Kòd nou sou travay sa yo',
     'Next tech’s fix': 'Kòd lòt teknisyen an', 'Fix pairs that happened more than once': 'Pè kòd ki rive plis pase yon fwa', 'Their repeats, newest first': 'Repetisyon li yo, pi resan an an premye',
     'Show fewer': 'Montre mwens', 'First visit': 'Premye vizit', 'Our fix': 'Kòd nou', 'Came back for': 'Tounen pou', 'Fiscal month': 'Mwa fiskal', 'Repeat type': 'Kalite repetisyon',
