@@ -816,6 +816,38 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sc-hero-card.near { --hc: #e3b21f; } }
   @media (max-width: 60rem) { .sc-hero-card { flex-direction: column; text-align: center; padding: 14px 10px; gap: 10px; } .sc-hero-k, .sc-hero-tags { justify-content: center; } .sc-hero-v { font-size: 36px; } }
   @media (max-width: 34rem) { .sc-hero { gap: 6px; } .sc-hero-card { padding: 10px 4px; gap: 8px; } .sc-hero-k { font-size: 12px; } .sc-hero-v { font-size: 22px; } .sc-hero-tags { font-size: 10.5px; flex-direction: column; gap: 1px; } }
+  /* Repeats tab additions (Nov 11): repeat rate by tech, came back fast cards, repeat calendar */
+  .sc-rate-avg { display: flex; align-items: center; gap: 6px; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+  .sc-rate-avg i { display: inline-block; width: 14px; border-top: 2px dashed var(--color-fg); opacity: .7; }
+  .sc-rate-bars { display: grid; gap: 4px; }
+  .sc-rate-row { all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-columns: minmax(0, 11.5rem) minmax(0, 1fr) 3.4rem; grid-template-rows: auto auto; column-gap: 10px; align-items: center; padding: 4px 6px; border-radius: 8px; font-size: var(--cds-font-size-body); }
+  .sc-rate-row:hover { background: color-mix(in srgb, var(--color-fg) 5%, transparent); }
+  .sc-rate-row:focus-visible { outline: 2px solid var(--cds-chart-axis); }
+  .sc-rate-row.dim { opacity: .45; } .sc-rate-row.on { background: color-mix(in srgb, var(--color-fg) 8%, transparent); }
+  .sc-rate-row .who { display: inline-flex; align-items: center; gap: 6px; min-width: 0; } .sc-rate-row .who b { font-weight: 700; } .sc-rate-row .who .nm { color: var(--color-fg-muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sc-rate-row .tr { position: relative; height: 12px; border-radius: 4px; background: var(--cds-chart-grid); }
+  .sc-rate-row .tr i { position: absolute; inset: 0 auto 0 0; border-radius: 4px; background: color-mix(in srgb, var(--color-fg-muted) 60%, transparent); }
+  .sc-rate-row.over .tr i { background: var(--color-bad); }
+  .sc-rate-row .tr .avg { position: absolute; top: -4px; bottom: -4px; width: 0; border-left: 2px dashed var(--color-fg); opacity: .7; }
+  .sc-rate-row .v { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; } .sc-rate-row.over .v { color: var(--color-bad); }
+  .sc-rate-row .raw { grid-column: 2 / 4; font-size: 11.5px; color: var(--color-fg-muted); }
+  @media (max-width: 44rem) { .sc-rate-row { grid-template-columns: minmax(0, 5.2rem) minmax(0, 1fr) 3.2rem; } .sc-rate-row .who .nm { display: none; } }
+  .sc-fast { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); }
+  .sc-fast-card { background: color-mix(in srgb, var(--color-fg) 4%, var(--color-panel)); border: 1px solid var(--color-border-line); border-left: 4px solid var(--color-bad); border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; min-width: 0; cursor: pointer; }
+  .sc-fast-card .top { display: flex; align-items: center; gap: 8px; } .sc-fast-card .who { min-width: 0; display: grid; } .sc-fast-card .who b { font-size: 13.5px; }
+  .sc-fast-card .who span { font-size: 11.5px; color: var(--color-fg-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sc-fast-card .d { margin-left: auto; text-align: center; flex: none; } .sc-fast-card .d b { display: block; font-family: var(--font-anthropic-serif); font-size: 22px; line-height: 1; color: var(--color-bad); } .sc-fast-card .d span { font-size: 10px; color: var(--color-fg-muted); }
+  .sc-fast-card .job { font-size: 12.5px; } .sc-fast-card .fx { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 8px; font-size: 12px; } .sc-fast-card .fx > span { color: var(--color-fg-muted); }
+  .sc-fast-card .fx b { overflow-wrap: anywhere; } .sc-fast-card .fx b.same { color: var(--color-bad); } .sc-fast-card .when { font-size: 11.5px; color: var(--color-fg-muted); }
+  .sc-cal { display: grid; gap: 8px; } .sc-cal .grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+  .sc-cal .h { font-size: 11px; color: var(--color-fg-muted); text-align: center; font-weight: 600; }
+  .sc-cal .c { all: unset; box-sizing: border-box; aspect-ratio: 1.7; border-radius: 6px; background: color-mix(in srgb, var(--color-fg) 6%, transparent); padding: 4px 6px; display: grid; align-content: space-between; font-variant-numeric: tabular-nums; min-width: 0; }
+  .sc-cal button.c { cursor: pointer; background: color-mix(in srgb, var(--color-bad) var(--a, 30%), transparent); } .sc-cal button.c:focus-visible { outline: 2px solid var(--cds-chart-axis); }
+  .sc-cal .c.out { background: none; } .sc-cal .c.fm { outline: 1px dashed var(--color-border-line); } .sc-cal .c.sel { outline: 2px solid var(--color-fg); }
+  .sc-cal .c .dt { font-size: 10.5px; color: var(--color-fg-muted); } .sc-cal .c .n { font-size: 16px; font-weight: 700; justify-self: end; }
+  @media (max-width: 44rem) { .sc-cal .c { aspect-ratio: 1; padding: 3px; } .sc-cal .c .n { font-size: 13px; } .sc-cal .c .dt { font-size: 9px; } }
+  .sc-cal .key { display: flex; gap: 14px; font-size: 12px; color: var(--color-fg-muted); } .sc-cal .key i { display: inline-block; width: 14px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; background: color-mix(in srgb, var(--color-bad) var(--a), transparent); }
+  .sc-cal .day { display: grid; gap: 4px; font-size: 12.5px; } .sc-cal .day div { color: var(--color-fg-muted); } .sc-cal .day div b { color: var(--color-fg); }
   /* Ribbon flow (preview): where repeats come from */
   .sc-flow-card { overflow: hidden; }
   .sc-flow { display: block; width: 100%; height: auto; overflow: visible; }
@@ -1256,12 +1288,17 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
       <p class="sc-note">Each ribbon is a group of repeats: from the job type of our visit to the fix code the next tech closed it with. Thicker means more repeats. Select a job type to filter the page to it.</p>
       <div data-draw="repflow2" data-source="repeats"></div>
     </article>
+    <article class="sc-card">
+      <h3 class="small">Came back fast: this week</h3>
+      <p class="sc-note" data-draw="repfastnote" data-source="repeats metrics">—</p>
+      <div class="sc-fast" data-draw="repfast" data-source="repeats metrics"></div>
+    </article>
     <div class="sc-grid">
       <article class="sc-card">
-        <h3 class="small">Repeats by tech</h3>
-        <p class="sc-note">Select a tech to see only theirs. The red number is how many came back within 7 days.</p>
-        <div class="sc-legend"><span><i class="box" style="background:var(--sc-c1)"></i>Trouble call → trouble call</span><span><i class="box" style="background:var(--sc-c2)"></i>Install → trouble call</span><span><i class="box" style="background:var(--sc-c6)"></i>Other</span></div>
-        <div class="sc-fb-bars" data-draw="repbars" data-source="repeats tech_table"></div>
+        <h3 class="small">Repeat rate by tech</h3>
+        <p class="sc-note">Repeats per 100 jobs this fiscal month, so a tech who ran more jobs isn't judged on raw count. Red means above the team average (dashed line). Select a tech to see only theirs.</p>
+        <div class="sc-rate-avg" data-draw="repavg" data-source="repeats metrics"><i></i><span>—</span></div>
+        <div class="sc-rate-bars" data-draw="repbars" data-source="repeats metrics"></div>
       </article>
       <article class="sc-card">
         <h3 class="small">Days between the two jobs</h3>
@@ -1272,6 +1309,11 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
         <ul class="sc-rep-pairs" data-draw="reppairs" data-source="repeats"></ul>
       </article>
     </div>
+    <article class="sc-card">
+      <h3 class="small">Repeat calendar</h3>
+      <p class="sc-note">Each day shows how many of our visits that day turned into repeats. Darker means more. Select a day to see them. Dashed outline: the current fiscal month. Visits from before this fiscal month only count repeats that came back this month.</p>
+      <div class="sc-cal" data-draw="repcal" data-source="repeats metrics"></div>
+    </article>
     <article class="sc-card">
       <h3 class="small">Month over month</h3>
       <p class="sc-note">Repeats per tech in each fiscal month, and the job type they repeated on most. The current month is still in progress.</p>
@@ -3047,7 +3089,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     return [...new Set([...ids, ...rs.map((r) => r.tech)])]; };
   const repFilter = (rs, skip) => rs.filter((r) => (SC.rep.fm === 'all' || r.fm === SC.rep.fm) && (SC.rep.type === 'all' || String(repKind(r.type)) === SC.rep.type)
     && (skip === 'tech' || !SC.rep.tech || r.tech === SC.rep.tech) && (skip === 'job' || SC.rep.job === 'all' || r.job === SC.rep.job));
-  const repRedraw = () => ['repfilters', 'repsum', 'repflow2', 'repwatch', 'repbars', 'repdays', 'reppairs', 'repflow', 'repmonths', 'repcount', 'replist'].forEach((n) => dash.draw(n));
+  const repRedraw = () => ['repfilters', 'repsum', 'repflow2', 'repfast', 'repfastnote', 'repwatch', 'repavg', 'repbars', 'repcal', 'repdays', 'reppairs', 'repflow', 'repmonths', 'repcount', 'replist'].forEach((n) => dash.draw(n));
   dash.draw('repnote', (el) => { const rs = repRows(); if (!rs) { el.textContent = ''; return; }
     const ms = repMonths(rs); el.textContent = (ms.length > 1 ? 'Fiscal months ' : 'Fiscal month ') + ms.join(' and ') + ', repeats through ' + fbmd(rs.reduce((a, r) => r.d2 > a ? r.d2 : a, '')) + '.'; });
   dash.draw('repfilters', (el) => {
@@ -3083,18 +3125,63 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
       li.appendChild(who); w.forEach((s) => li.appendChild(fbEl('span', 'ln', s))); el.appendChild(li); k++; });
     if (!k) el.appendChild(fbEl('li', null, 'No clear patterns yet with these filters. A tech needs at least 3 repeats before anything is called out.'));
   });
+  /* Repeat rate by tech (Dillon, Nov 11): repeats per 100 jobs in the latest fiscal month (jobs from BP-Ontrac metrics), team average as a dashed line. */
+  const repJobs = () => { const m = dash.data('metrics'); const out = {}; if (m.status !== 'ok' || !m.data.length) return { jobs: out, end: '' };
+    const ps = m.data.reduce((a, r) => r.period_start > a ? r.period_start : a, ''); let end = '';
+    m.data.forEach((r) => { if (r.period_start === ps) { out[String(r.tech_id)] = +r.total_jobs || 0; end = String(r.period_end); } }); return { jobs: out, end }; };
+  const repRates = () => { const all = repRows(); if (!all) return null; const rs = repFilter(all, 'tech'), J = repJobs().jobs;
+    const rows = Object.keys(J).filter((t) => J[t] > 0).map((t) => { const n = rs.filter((r) => r.tech === t).length; return { t, n, j: J[t], r: n / J[t] * 100 }; }).sort((a, b) => b.r - a.r || a.t.localeCompare(b.t));
+    const N = rows.reduce((a, x) => a + x.n, 0), JJ = rows.reduce((a, x) => a + x.j, 0); return { rows, N, J: JJ, avg: JJ ? N / JJ * 100 : 0 }; };
+  dash.draw('repavg', (el) => { const R = repRates(); el.replaceChildren(fbEl('i')); el.appendChild(fbEl('span', null, R ? 'Team average ' + R.avg.toFixed(1) + '% (' + R.N + ' repeats on ' + R.J.toLocaleString('en-US') + ' jobs)' : '—')); });
   dash.draw('repbars', (el) => {
-    el.replaceChildren(); const all = repRows(); if (!all) return; const rs = repFilter(all, 'tech');
-    const techs = repRoster(all), cnt = (t) => rs.filter((r) => r.tech === t), max = Math.max(1, ...techs.map((t) => cnt(t).length));
-    techs.sort((a, b) => cnt(b).length - cnt(a).length || a.localeCompare(b)).forEach((t) => {
-      const mine = cnt(t), n = mine.length, fast = mine.filter((r) => r.days <= 7).length;
-      const b = fbEl('button', 'sc-fb-bar sc-rep-bar' + (!n ? ' zero' : SC.rep.tech === t ? ' on' : SC.rep.tech ? ' dim' : '')); b.type = 'button'; b.setAttribute('aria-pressed', String(SC.rep.tech === t));
-      b.title = SC.names && SC.names[t] ? SC.names[t] : ''; if (!n) b.disabled = true;
-      b.appendChild(fbEl('span', 't', t)); const tr = fbEl('span', 'track');
-      [0, 1, 2].forEach((k) => { const c = mine.filter((r) => repKind(r.type) === k).length; if (c) { const i = fbEl('i'); i.style.width = (c / max * 100) + '%'; i.style.background = ['var(--sc-c1)', 'var(--sc-c2)', 'var(--sc-c6)'][k]; tr.appendChild(i); } });
-      b.append(tr, fbEl('span', 'p', String(n)), fbEl('span', 'n' + (fast ? ' fast' : ''), fast + ' ≤7d'));
-      if (n) b.onclick = () => { SC.rep.tech = SC.rep.tech === t ? null : t; repRedraw(); };
-      el.appendChild(b); });
+    el.replaceChildren(); const R = repRates(); if (!R) return; const max = Math.max(R.avg * 1.6, ...R.rows.map((x) => x.r)) * 1.08 || 1;
+    R.rows.forEach((x) => { const b = fbEl('button', 'sc-rate-row' + (x.r > R.avg ? ' over' : '') + (SC.rep.tech === x.t ? ' on' : SC.rep.tech ? ' dim' : '')); b.type = 'button'; b.setAttribute('aria-pressed', String(SC.rep.tech === x.t));
+      const who = fbEl('span', 'who'); who.appendChild(SC.av(x.t, 22)); const id = fbEl('b', null, x.t); id.dataset.noTr = '1'; who.appendChild(id); if (SC.names[x.t]) { const nm = fbEl('span', 'nm', SC.names[x.t]); nm.dataset.noTr = '1'; who.appendChild(nm); }
+      const tr = fbEl('span', 'tr'), i = fbEl('i'); i.style.width = (x.r / max * 100) + '%'; const a = fbEl('span', 'avg'); a.style.left = (R.avg / max * 100) + '%'; tr.append(i, a);
+      b.append(who, tr, fbEl('span', 'v', x.r.toFixed(1) + '%'), fbEl('span', 'raw', x.n + (x.n === 1 ? ' repeat of ' : ' repeats of ') + x.j + ' jobs'));
+      b.onclick = () => { SC.rep.tech = SC.rep.tech === x.t ? null : x.t; repRedraw(); }; el.appendChild(b); });
+  });
+  /* Came back fast this week (Dillon, Nov 11): repeats within 0–3 days whose return visit was in the last 7 days of data. */
+  const repEnd = () => { const e = repJobs().end, all = repRows() || []; return e || all.reduce((a, r) => r.d2 > a ? r.d2 : a, ''); };
+  const repShift = (iso, n) => { const [y, m, d] = iso.split('-').map(Number); const t = new Date(y, m - 1, d + n); return t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0'); };
+  dash.draw('repfastnote', (el) => { const e = repEnd(); el.textContent = e ? 'Repeats that came back within 0–3 days, with the return visit ' + fbmd(repShift(e, -6)) + ' to ' + fbmd(e) + '. A red fix code means the next tech closed it with the same code we used.' : '—'; });
+  dash.draw('repfast', (el) => {
+    el.replaceChildren(); const all = repRows(); if (!all) return; const e = repEnd(), from = repShift(e, -6);
+    const rs = repFilter(all).filter((r) => r.days <= 3 && r.d2 >= from && r.d2 <= e).sort((a, b) => a.d2 < b.d2 ? 1 : a.d2 > b.d2 ? -1 : a.tech.localeCompare(b.tech));
+    if (!rs.length) { el.appendChild(fbEl('p', 'sc-tc-empty', 'None this week.')); return; }
+    rs.forEach((r) => { const c = fbEl('article', 'sc-fast-card'), top = fbEl('div', 'top'), who = fbEl('div', 'who');
+      const t = fbEl('b', null, 'Tech ' + r.tech); t.dataset.noTr = '1'; who.appendChild(t); if (SC.names[r.tech]) { const nm = fbEl('span', null, SC.names[r.tech]); nm.dataset.noTr = '1'; who.appendChild(nm); }
+      const d = fbEl('div', 'd'); d.append(fbEl('b', null, String(r.days)), fbEl('span', null, r.days === 1 ? 'day' : 'days'));
+      top.append(SC.av(r.tech, 30), who, d);
+      const job = fbEl('div', 'job'); job.appendChild(repCode(r.job)); job.appendChild(document.createTextNode(' · ' + r.type));
+      const fx = fbEl('div', 'fx'), same = r.fix1 && r.fix1 === r.fix2;
+      const code = (txt) => { const e2 = repCode(txt, 'b'); if (same) e2.classList.add('same'); return e2; };
+      fx.append(fbEl('span', null, 'Our fix'), code(r.fix1), fbEl('span', null, 'Came back for'), repCode(r.why, 'b'), fbEl('span', null, 'Next fix'), code(r.fix2));
+      c.append(top, job, fx, fbEl('div', 'when', 'Our visit ' + fbmd(r.d1) + ' → back ' + fbmd(r.d2)));
+      c.onclick = () => { SC.rep.tech = SC.rep.tech === r.tech ? null : r.tech; repRedraw(); }; el.appendChild(c); });
+  });
+  /* Repeat calendar (Dillon, Nov 11): our visits per day that turned into repeats, Monday-first weeks up to the latest data. */
+  SC.rep.calDay = null;
+  dash.draw('repcal', (el) => {
+    el.replaceChildren(); const all = repRows(); if (!all) return; const rs = repFilter(all), e = repEnd(); if (!rs.length || !e) { el.appendChild(fbEl('p', 'sc-tc-empty', 'No repeats with these filters.')); return; }
+    const by = {}; rs.forEach((r) => { (by[r.d1] = by[r.d1] || []).push(r); });
+    const first = Object.keys(by).sort()[0], dow = (iso) => { const [y, m, d] = iso.split('-').map(Number); return (new Date(y, m - 1, d).getDay() + 6) % 7; };
+    const start = repShift(first, -dow(first)), last = repShift(e, 6 - dow(e)), mx = Math.max(...Object.values(by).map((v) => v.length));
+    const fmStart = (() => { const m = dash.data('metrics'); return m.status === 'ok' && m.data.length ? m.data.reduce((a, r) => r.period_start > a ? r.period_start : a, '') : ''; })();
+    const g = fbEl('div', 'grid'); ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].forEach((h) => g.appendChild(fbEl('div', 'h', h)));
+    for (let k = start; k <= last; k = repShift(k, 1)) { const list = by[k] || [], out = k < first || k > e;
+      const c = fbEl(list.length ? 'button' : 'div', 'c' + (out ? ' out' : '') + (fmStart && k >= fmStart && k <= e ? ' fm' : '') + (SC.rep.calDay === k ? ' sel' : ''));
+      const dd = +k.slice(8); c.appendChild(fbEl('span', 'dt', dd === 1 || k === start ? fbmd(k) : String(dd)));
+      if (list.length) { c.type = 'button'; c.appendChild(fbEl('span', 'n', String(list.length))); c.style.setProperty('--a', Math.round(18 + list.length / mx * 70) + '%');
+        c.title = fbmd(k) + ': ' + list.length + (list.length === 1 ? ' visit came back' : ' visits came back');
+        c.onclick = () => { SC.rep.calDay = SC.rep.calDay === k ? null : k; dash.draw('repcal'); }; }
+      g.appendChild(c); }
+    el.appendChild(g);
+    const key = fbEl('div', 'key'); [['Fewer', 25], ['More', 85]].forEach(([t, p]) => { const s2 = fbEl('span'), i = fbEl('i'); i.style.setProperty('--a', p + '%'); s2.append(i, document.createTextNode(t)); key.appendChild(s2); }); el.appendChild(key);
+    const sel = SC.rep.calDay && by[SC.rep.calDay];
+    if (sel) { const box = fbEl('div', 'day'); box.appendChild(fbEl('b', null, fbmd(SC.rep.calDay) + ': ' + sel.length + ' came back'));
+      sel.forEach((r) => { const ln = fbEl('div'); const id = fbEl('b', null, 'Tech ' + r.tech); id.dataset.noTr = '1'; ln.append(id, document.createTextNode(' · ')); ln.append(repCode(r.job), document.createTextNode(' · '), repCode(r.fix1), document.createTextNode(' → '), repCode(r.fix2), document.createTextNode(' · ' + r.days + (r.days === 1 ? ' day' : ' days'))); box.appendChild(ln); });
+      el.appendChild(box); }
   });
   dash.draw('repdays', (el) => { const all = repRows(); if (!all) { el.replaceChildren(); return; } repDays(el, repFilter(all)); });
   dash.draw('reppairs', (el) => { const all = repRows(); if (!all) { el.replaceChildren(); return; } repPairs(el, repFilter(all), 8); });
@@ -3575,6 +3662,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     'Score: 60% FTR, 30% tNPS and 10% tool usage, the same as the race. A tech needs at least 40 jobs and 5 surveys in the timeframe to be ranked; the rest are in the drop-down below the ranking. Highlighted rows are techs on this team. Select a column heading to sort by it.': 'Puntaje: 60% FTR, 30% tNPS y 10% uso de herramienta, igual que la carrera. Un técnico necesita al menos 40 trabajos y 5 encuestas en el periodo para clasificar; los demás están en la lista desplegable debajo de la clasificación. Las filas resaltadas son técnicos de este equipo. Seleccione el título de una columna para ordenar por ella.',
     'Badges this month:': 'Insignias este mes:', 'Perfect tool usage': 'Uso perfecto de herramienta', '5 promoters in a row': '5 promotores seguidos', 'Zero repeats': 'Cero repeticiones', 'Most improved FTR': 'FTR que más mejoró', 'Comment of the week': 'Comentario de la semana', 'Team tNPS this month': 'tNPS del equipo este mes', 'new': 'nuevo',
     'Top tech': 'Mejor técnico', 'Race leader': 'Líder de la carrera', 'Show': 'Mostrar', 'Hide': 'Ocultar',
+    'Repeat rate by tech': 'Tasa de repeticiones por técnico', "Repeats per 100 jobs this fiscal month, so a tech who ran more jobs isn't judged on raw count. Red means above the team average (dashed line). Select a tech to see only theirs.": 'Repeticiones por cada 100 trabajos este mes fiscal, para no juzgar por el total a quien hizo más trabajos. Rojo: por encima del promedio del equipo (línea discontinua). Selecciona un técnico para ver solo las suyas.', 'Came back fast: this week': 'Volvieron rápido: esta semana', 'Repeat calendar': 'Calendario de repeticiones', 'Each day shows how many of our visits that day turned into repeats. Darker means more. Select a day to see them. Dashed outline: the current fiscal month. Visits from before this fiscal month only count repeats that came back this month.': 'Cada día muestra cuántas de nuestras visitas de ese día terminaron en repetición. Más oscuro es más. Selecciona un día para verlas. Borde discontinuo: el mes fiscal actual. Las visitas de antes de este mes fiscal solo cuentan repeticiones que volvieron este mes.', 'Our fix': 'Nuestra reparación', 'Came back for': 'Volvió por', 'Next fix': 'Siguiente reparación', 'None this week.': 'Ninguna esta semana.', 'day': 'día', 'days': 'días', 'Fewer': 'Menos', 'More': 'Más', 'Mon': 'Lun', 'Tue': 'Mar', 'Wed': 'Mié', 'Thu': 'Jue', 'Fri': 'Vie', 'Sat': 'Sáb', 'Sun': 'Dom',
     'Monthly QCs': 'QC del mes', 'On pace': 'Al día', 'Behind pace': 'Atrasado', 'Ride Along': 'Acompañamiento', 'After the Fact': 'Después del trabajo', 'Done': 'Listo',
     'QC observations by other observers': 'Observaciones de QC hechas por otros observadores', 'QCs by tech': 'QC por técnico',
     'Select a tech to see only theirs.': 'Selecciona un técnico para ver solo los suyos.', 'All QCs': 'Todos los QC',
@@ -3719,6 +3807,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     'Knowledgeable': 'Konn travay li', 'Professional': 'Pwofesyonèl', 'Friendly and pleasant': 'Janti e agreyab', 'Helpful': 'Ede anpil',
     'Quick and on time': 'Rapid e alè', 'Explained things': 'Te esplike bagay yo', 'Fixed the problem': 'Te ranje pwoblèm nan', 'Score': 'Nòt',
     'Comments': 'Kòmantè', 'Average score': 'Nòt mwayèn', 'Out of 10': 'Sou 10',
+    'Repeat rate by tech': 'To repetisyon pa teknisyen', "Repeats per 100 jobs this fiscal month, so a tech who ran more jobs isn't judged on raw count. Red means above the team average (dashed line). Select a tech to see only theirs.": 'Repetisyon pou chak 100 travay mwa fiskal sa a, pou yo pa jije yon teknisyen ki fè plis travay sou total la. Wouj: pi wo pase mwayèn ekip la (liy pwentiye). Chwazi yon teknisyen pou wè sa pa l yo sèlman.', 'Came back fast: this week': 'Tounen vit: semèn sa a', 'Repeat calendar': 'Kalandriye repetisyon', 'Each day shows how many of our visits that day turned into repeats. Darker means more. Select a day to see them. Dashed outline: the current fiscal month. Visits from before this fiscal month only count repeats that came back this month.': 'Chak jou montre konbyen nan vizit nou jou sa a ki tounen repetisyon. Pi fonse vle di plis. Chwazi yon jou pou wè yo. Kad pwentiye: mwa fiskal kounye a. Vizit anvan mwa fiskal sa a konte sèlman repetisyon ki tounen mwa sa a.', 'Our fix': 'Reparasyon nou', 'Came back for': 'Tounen pou', 'Next fix': 'Pwochen reparasyon', 'None this week.': 'Pa gen semèn sa a.', 'day': 'jou', 'days': 'jou', 'Fewer': 'Mwens', 'More': 'Plis', 'Mon': 'Len', 'Tue': 'Mad', 'Wed': 'Mèk', 'Thu': 'Jed', 'Fri': 'Van', 'Sat': 'Sam', 'Sun': 'Dim',
     'Monthly QCs': 'QC chak mwa', 'On pace': 'Nan ritm', 'Behind pace': 'An reta', 'Ride Along': 'Akonpayman', 'After the Fact': 'Apre travay la', 'Done': 'Fini',
     'QC observations by other observers': 'Obsèvasyon QC lòt obsèvatè fè', 'QCs by tech': 'QC pa teknisyen',
     'Select a tech to see only theirs.': 'Chwazi yon teknisyen pou wè sèlman pa l yo.', 'All QCs': 'Tout QC',
@@ -3736,6 +3825,12 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   };
   const dateHT = (s) => s.replace(/\b([A-Z][a-z]{2}) (\d{1,2}), (\d{4})\b/g, (_, m, d, y) => `${d} ${moh(m)} ${y}`);
   const RULES_HT = [
+    [/^Team average ([\d.]+)% \((\d+) repeats on ([\d,]+) jobs\)$/, (m) => `Mwayèn ekip ${m[1]}% (${m[2]} repetisyon sou ${m[3]} travay)`],
+    [/^(\d+) repeats? of (\d+) jobs$/, (m) => `${m[1]} sou ${m[2]} travay`],
+    [/^Repeats that came back within 0–3 days, with the return visit (\w{3} \d{1,2}) to (\w{3} \d{1,2})\. A red fix code means the next tech closed it with the same code we used\.$/, (m) => `Repetisyon ki tounen nan 0–3 jou, ak vizit retou a soti ${m[1]} rive ${m[2]}. Yon kòd wouj vle di pwochen teknisyen an fèmen l ak menm kòd nou te itilize a.`],
+    [/^Our visit (\w{3} \d{1,2}) → back (\w{3} \d{1,2})$/, (m) => `Vizit nou ${m[1]} → tounen ${m[2]}`],
+    [/^(\w{3} \d{1,2}): (\d+) came back$/, (m) => `${m[1]}: ${m[2]} tounen`],
+    [/^ · (\d+) days?$/, (m) => ` · ${m[1]} jou`],
     [/^([+−±][\d.]+) pts vs the update through (\w{3} \d{1,2})$/, (m) => `${m[1]} pwen konpare ak mizajou jiska ${m[2]}`],
     /* Monthly QCs (Nov 10) */
     [/^(\d+) of (\d+) QCs done$/, (m) => `${m[1]} sou ${m[2]} QC fini`],
@@ -3869,6 +3964,12 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     return null;
   };
   const RULES = [
+    [/^Team average ([\d.]+)% \((\d+) repeats on ([\d,]+) jobs\)$/, (m) => `Promedio del equipo ${m[1]}% (${m[2]} repeticiones en ${m[3]} trabajos)`],
+    [/^(\d+) repeats? of (\d+) jobs$/, (m) => `${m[1]} de ${m[2]} trabajos`],
+    [/^Repeats that came back within 0–3 days, with the return visit (\w{3} \d{1,2}) to (\w{3} \d{1,2})\. A red fix code means the next tech closed it with the same code we used\.$/, (m) => `Repeticiones que volvieron en 0–3 días, con la visita de regreso del ${m[1]} al ${m[2]}. Un código en rojo significa que el siguiente técnico lo cerró con el mismo código que usamos.`],
+    [/^Our visit (\w{3} \d{1,2}) → back (\w{3} \d{1,2})$/, (m) => `Nuestra visita ${m[1]} → volvió ${m[2]}`],
+    [/^(\w{3} \d{1,2}): (\d+) came back$/, (m) => `${m[1]}: volvieron ${m[2]}`],
+    [/^ · (\d+) days?$/, (m) => ` · ${m[1]} ${m[1] === '1' ? 'día' : 'días'}`],
     [/^([+−±][\d.]+) pts vs the update through (\w{3} \d{1,2})$/, (m) => `${m[1]} pts vs. la actualización hasta el ${m[2]}`],
     /* Monthly QCs (Nov 10) */
     [/^(\d+) of (\d+) QCs done$/, (m) => `${m[1]} de ${m[2]} QC hechos`],
