@@ -727,7 +727,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   .sc-orbwrap { flex: none; line-height: 0; }
   :root { --sc-orb-near: #e3b21f; }
   .sc-big-row:has(.sc-orbwrap) { align-items: center; gap: 14px; }
-  .sc-orb { display: block; overflow: visible; }
+  .sc-orb { display: block; overflow: visible; } canvas.sc-orb { border-radius: 50%; }
   .sc-orb .glass { fill: color-mix(in srgb, var(--color-fg) 9%, var(--color-bg)); }
   .sc-orb .rim { fill: none; stroke: color-mix(in srgb, var(--color-fg) 22%, transparent); stroke-width: 1.2; }
   .sc-orb .shine { fill: #fff; opacity: .22; }
@@ -1736,30 +1736,79 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     const io = new IntersectionObserver((ents) => { if (ents.some((x) => x.isIntersecting)) { io.disconnect(); go(); } }, { threshold: 0.6 });
     io.observe(el);
   };
-  /* Glass orb (preview): value fills toward 100, with the bottom at 12 points under target, so the target line sits partway up. */
-  SC.orbN = 0;
-  SC.orb = (v, T, size) => {
-    const NS = 'http://www.w3.org/2000/svg', mk = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
-    const id = 'orb' + (++SC.orbN), ok = v != null && v >= T, lo = Math.max(0, T - 12);
-    const fr = v == null ? 0 : Math.max(0.05, Math.min(1, (v - lo) / (100 - lo))), tf = (T - lo) / (100 - lo);
-    const y = 92 - fr * 84, ty = 92 - tf * 84, near = !ok && v != null && T - v <= 1, col = ok ? 'var(--color-ok)' : near ? 'var(--sc-orb-near)' : 'var(--color-bad)';
-    const s = mk('svg', { viewBox: '0 0 100 100', width: size, height: size, class: 'sc-orb', role: 'img', 'aria-hidden': 'true' });
-    const d = mk('defs', {}); const cp = mk('clipPath', { id: id + 'c' }); cp.appendChild(mk('circle', { cx: 50, cy: 50, r: 44 })); d.appendChild(cp);
-    const lg = mk('linearGradient', { id: id + 'g', x1: 0, y1: 0, x2: 0, y2: 1 }); lg.append(mk('stop', { offset: 0, 'stop-color': col, 'stop-opacity': .95 }), mk('stop', { offset: 1, 'stop-color': col, 'stop-opacity': .72 })); d.appendChild(lg);
-    const rg = mk('radialGradient', { id: id + 'r', cx: .35, cy: .3, r: .8 }); rg.append(mk('stop', { offset: 0, 'stop-color': '#fff', 'stop-opacity': .12 }), mk('stop', { offset: .6, 'stop-color': '#fff', 'stop-opacity': 0 }), mk('stop', { offset: 1, 'stop-color': '#000', 'stop-opacity': .14 })); d.appendChild(rg);
-    s.appendChild(d); s.appendChild(mk('circle', { cx: 50, cy: 50, r: 44, class: 'glass' }));
-    const g = mk('g', { 'clip-path': 'url(#' + id + 'c)' });
-    const wave = (yy, amp, cls) => { let p = 'M0 ' + yy; for (let x = 0; x < 200; x += 50) p += ' Q' + (x + 12.5) + ' ' + (yy - amp) + ' ' + (x + 25) + ' ' + yy + ' T' + (x + 50) + ' ' + yy; p += ' V100 H0 Z'; const w = mk('path', { d: p, fill: 'url(#' + id + 'g)', class: cls }); return w; };
-    g.append(wave(y + 1.5, 2.6, 'wv2'), wave(y, 3.2, 'wv'));
-    if (v != null) [[30, 1.6, 0], [52, 1.2, 1.4], [66, 1.8, 2.6], [42, 1, 3.3]].forEach(([x, r, dl]) => { if (y < 84) { const b = mk('circle', { cx: x, cy: 88, r, class: 'bb' }); b.style.animationDelay = dl + 's'; g.appendChild(b); } });
-    s.appendChild(g);
-    { const tg = mk('g', { 'clip-path': 'url(#' + id + 'c)' }); tg.appendChild(mk('line', { x1: 4, x2: 96, y1: ty, y2: ty, class: 'tl' })); s.appendChild(tg); }
-    s.appendChild(mk('circle', { cx: 50, cy: 50, r: 44, fill: 'url(#' + id + 'r)' }));
-    s.appendChild(mk('ellipse', { cx: 36, cy: 26, rx: 15, ry: 8, transform: 'rotate(-28 36 26)', class: 'shine' }));
-    s.appendChild(mk('ellipse', { cx: 64, cy: 82, rx: 14, ry: 3.5, class: 'shine2' }));
-    s.appendChild(mk('circle', { cx: 50, cy: 50, r: 44, class: 'rim' }));
-    const w = document.createElement('div'); w.className = 'sc-orbwrap'; w.title = v == null ? '' : 'Filled to ' + SC.pct(v) + '; the dashed line is the ' + SC.tgt(T) + ' target'; w.appendChild(s); return w;
-  };
+  /* Glass orb (Nov 11, restyled after Dillon's reference video): dark glass sphere on a canvas, thin bright rim, three translucent wave
+     layers with a glowing crest, and glowing specks drifting up. Liquid color: green on target, yellow within 1 point below, red further
+     below (fixed bright shades, since the orb stays dark in both themes). Fill = (value − (target − 12)) / (112 − target) × 0.8, so there is
+     always dark glass above; notches on the glass mark the target. One shared loop (~30 fps) animates only orbs on screen; still with reduced motion. */
+  SC.orb = (() => {
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const rgb = (x) => { x = x.trim().replace('#', ''); if (x.length === 3) x = [...x].map((c) => c + c).join(''); const n = parseInt(x, 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+    const mix = (a, b, t, al = 1) => { const A = rgb(a), B = rgb(b); return 'rgba(' + A.map((x, i) => Math.round(x + (B[i] - x) * t)).join(',') + ',' + al + ')'; };
+  /* One shared animation loop for every orb on the page, about 30 frames a second, only for orbs on screen. */
+    const orbs = new Set(); let running = false, lastT = 0;
+    const io = 'IntersectionObserver' in window ? new IntersectionObserver((es) => es.forEach((e) => { if (e.target.__orb) e.target.__orb.vis = e.isIntersecting; })) : null;
+    const tick = (now) => { if (!orbs.size) { running = false; return; } requestAnimationFrame(tick); if (now - lastT < 32) return; const dt = Math.min(.06, (now - lastT) / 1000); lastT = now;
+      for (const o of orbs) { if (!o.cv.isConnected) { orbs.delete(o); continue; } if (o.vis) { o.step(dt); o.draw(); } } };
+
+    const makeOrb = (value, target, size) => {
+      const css = (k) => ({ '--orb-ok': '#3fc57e', '--orb-near': '#e3b21f', '--orb-bad': '#f06a6a' })[k];
+      const cv = document.createElement('canvas'); cv.className = 'sc-orb'; cv.style.width = cv.style.height = size + 'px';
+      const dpr = Math.min(2, window.devicePixelRatio || 1); cv.width = cv.height = Math.round(size * dpr);
+      const ctx = cv.getContext('2d'), S = size, R = S / 2, sc = S / 92;
+      const lo = target - 12, goalF = (target - lo) / (100 - lo) * .8;
+      const want = Math.max(.08, Math.min(.8, (value - lo) / (100 - lo) * .8));
+      const C = value >= target ? css('--orb-ok') : target - value <= 1 ? css('--orb-near') : css('--orb-bad');
+      cv.setAttribute('aria-hidden', 'true');
+      let lvl = still ? want : 0, T = Math.random() * 10;
+      const NP = Math.round(14 + 10 * sc), parts = [];
+      const spawn = (p, fresh) => { p.x = (Math.random() * 2 - 1) * .82; p.y = fresh ? Math.random() : 0; p.r = (.5 + Math.random() * Math.random() * 2.1) * Math.max(.75, sc); p.s = .05 + Math.random() * .1; p.w = Math.random() * 6.28; p.tw = 1 + Math.random() * 2.5; p.life = .55 + Math.random() * .45; p.deep = Math.random() < .4; return p; };
+      for (let i = 0; i < NP; i++) parts.push(spawn({}, true));
+      const waveY = (x, base, ph, amp) => base + Math.sin(x * .055 / sc + ph) * amp + Math.sin(x * .11 / sc - ph * 1.4) * amp * .45;
+      const o = { cv, vis: true,
+        step(dt) { T += dt; lvl += (want - lvl) * Math.min(1, dt * 2.2); for (const p of parts) { p.y += p.s * dt; p.w += dt * p.tw; if (p.y > p.life) spawn(p, false); } },
+        draw() {
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, S, S);
+          ctx.save(); ctx.beginPath(); ctx.arc(R, R, R - 1.2, 0, 6.3); ctx.clip();
+          /* Dark glass. */
+          const bg = ctx.createRadialGradient(S * .34, S * .28, S * .04, R, R, R); bg.addColorStop(0, '#30333a'); bg.addColorStop(.42, '#101216'); bg.addColorStop(1, '#040405'); ctx.fillStyle = bg; ctx.fillRect(0, 0, S, S);
+          const surf = S - 4 * sc - lvl * (S - 8 * sc), amp = S * .034;
+          /* Three wave layers, back to front. */
+          const layer = (ph, a, dy, fill) => { ctx.beginPath(); ctx.moveTo(0, S); for (let x = 0; x <= S; x += 3) ctx.lineTo(x, waveY(x, surf + dy, ph, a)); ctx.lineTo(S, S); ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); };
+          layer(T * .9 + 2, amp * 1.25, -amp * .5, mix(C, '#000000', .45, .5));
+          layer(-T * 1.3 + 1, amp, amp * .1, mix(C, '#000000', .25, .6));
+          const fg = ctx.createLinearGradient(0, surf - amp, 0, S); fg.addColorStop(0, mix(C, '#ffffff', .12, .92)); fg.addColorStop(.22, mix(C, '#000000', .3, .85)); fg.addColorStop(.6, mix(C, '#000000', .66, .85)); fg.addColorStop(1, mix(C, '#000000', .86, .92));
+          layer(T * 1.7, amp * .9, amp * .55, fg);
+          /* Glowing crest on the front wave. */
+          const crest = () => { ctx.beginPath(); for (let x = 0; x <= S; x += 3) { const y = waveY(x, surf + amp * .55, T * 1.7, amp * .9); x ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } };
+          crest(); ctx.strokeStyle = mix(C, '#ffffff', .35, .28); ctx.lineWidth = 4.5 * sc; ctx.stroke();
+          crest(); ctx.strokeStyle = mix(C, '#ffffff', .78, .95); ctx.lineWidth = Math.max(1, 1.3 * sc); ctx.stroke();
+          /* Light under the surface. */
+          const ug = ctx.createRadialGradient(R, surf + amp, 0, R, surf + amp, R * .9); ug.addColorStop(0, mix(C, '#ffffff', .5, .12)); ug.addColorStop(1, mix(C, '#ffffff', .5, 0)); ctx.fillStyle = ug; ctx.fillRect(0, surf, S, S - surf);
+          /* Glowing specks drifting up from the surface. */
+          for (const p of parts) { const px = R + p.x * R + Math.sin(p.w) * 2.2 * sc, y0 = p.deep ? S * .97 : surf + amp, py = y0 - p.y * (y0 - S * .06), f = p.y / p.life, al = Math.sin(Math.min(1, f) * Math.PI) * (.55 + .45 * Math.sin(p.w * 1.7)) * (py > surf + amp ? .55 : 1);
+            if (al <= .02) continue; ctx.beginPath(); ctx.arc(px, py, p.r * 2.6, 0, 6.3); ctx.fillStyle = mix(C, '#ffffff', .55, al * .16); ctx.fill();
+            ctx.beginPath(); ctx.arc(px, py, p.r, 0, 6.3); ctx.fillStyle = mix(C, '#ffffff', .82, Math.min(1, al)); ctx.fill(); }
+          /* Soft highlight at the top left, and a darker edge all round. */
+          const hl = ctx.createRadialGradient(S * .33, S * .24, 0, S * .33, S * .24, S * .42); hl.addColorStop(0, 'rgba(255,255,255,.17)'); hl.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = hl; ctx.fillRect(0, 0, S, S);
+          const vg = ctx.createRadialGradient(R, R, R * .62, R, R, R); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.6)'); ctx.fillStyle = vg; ctx.fillRect(0, 0, S, S);
+          /* Target notches etched on the glass. */
+          const gy = S - 4 * sc - goalF * (S - 8 * sc), half = Math.sqrt(Math.max(0, (R - 2) * (R - 2) - (gy - R) * (gy - R)));
+          ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = Math.max(1, 1.2 * sc); ctx.beginPath(); ctx.moveTo(R - half, gy); ctx.lineTo(R - half + 7 * sc, gy); ctx.moveTo(R + half, gy); ctx.lineTo(R + half - 7 * sc, gy); ctx.stroke();
+          ctx.save(); ctx.setLineDash([2, 4]); ctx.strokeStyle = 'rgba(255,255,255,.16)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(R - half + 9 * sc, gy); ctx.lineTo(R + half - 9 * sc, gy); ctx.stroke(); ctx.restore();
+          ctx.restore();
+          /* Thin bright rim. */
+          const rim = ctx.createLinearGradient(S * .15, S * .1, S * .85, S * .9); rim.addColorStop(0, 'rgba(255,255,255,.85)'); rim.addColorStop(.5, 'rgba(255,255,255,.28)'); rim.addColorStop(1, 'rgba(255,255,255,.5)');
+          ctx.beginPath(); ctx.arc(R, R, R - 1, 0, 6.3); ctx.strokeStyle = rim; ctx.lineWidth = Math.max(1, 1.4 * sc); ctx.stroke();
+        },
+        replay() { if (!still) lvl = 0; } };
+      cv.__orb = o; if (io) io.observe(cv); o.draw();
+      if (!still) { orbs.add(o); if (!running) { running = true; lastT = performance.now(); requestAnimationFrame(tick); } }
+      return o;
+    };
+    return (v, T, size) => { const w = document.createElement('div'); w.className = 'sc-orbwrap';
+      w.title = v == null ? '' : 'Filled to ' + SC.pct(v) + '; the notches on the glass mark the ' + SC.tgt(T) + ' target';
+      w.appendChild(makeOrb(v == null ? T - 12 : v, T, size).cv); return w; };
+  })();
   dash.draw('orb', (el) => { el.replaceChildren(); const r = latest(); const k = el.dataset.kpi; if (!r) return; el.appendChild(SC.orb(r[k], SC.T[k], +(el.dataset.size || 92)).firstChild); });
   dash.draw('kpi', (el) => { const r = latest(); el.textContent = r ? SC.pct(r[el.dataset.kpi]) : '—'; });
   dash.draw('delta', (el) => {
