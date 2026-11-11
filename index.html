@@ -839,12 +839,12 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
         <button class="sc-tab" role="tab" type="button" id="tab-repeats" data-page="repeats" aria-selected="false">Repeats</button>
       </div>
     </div>
-    <button class="sc-spot-bar" id="spot-bar" type="button" aria-expanded="true" aria-controls="spotlight">
+    <button class="sc-spot-bar" id="spot-bar" type="button" aria-expanded="false" aria-controls="spotlight">
       <span class="it"><span aria-hidden="true">🏆</span><span class="k">Top tech</span><b data-draw="spotchamp" data-source="top_tech">—</b></span>
       <span class="it"><span aria-hidden="true">🏁</span><span class="k">Race leader</span><b data-draw="spotlead" data-source="race">—</b><span class="pts" data-draw="spotpts" data-source="race"></span></span>
       <span class="more"><span class="lbl-show">Show</span><span class="lbl-hide">Hide</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span>
     </button>
-    <div class="sc-spot" id="spotlight">
+    <div class="sc-spot" id="spotlight" hidden>
     <section class="sc-champ" id="top-tech" aria-label="Top tech of the last 30 days">
       <svg class="sc-confetti" viewBox="0 0 300 160" preserveAspectRatio="xMaxYMin slice" aria-hidden="true">
         <g fill="#e8b931"><rect x="40" y="18" width="8" height="4" rx="1" transform="rotate(25 44 20)"/><rect x="250" y="120" width="8" height="4" rx="1" transform="rotate(-30 254 122)"/><circle cx="210" cy="30" r="3"/><circle cx="120" cy="140" r="2.5"/></g>
@@ -1699,9 +1699,9 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
       if (show && !was && !SC.still) { s.classList.remove('sc-enter'); void s.offsetWidth; s.classList.add('sc-enter'); }
     }
     for (const b of document.querySelectorAll('.sc-tab')) b.setAttribute('aria-selected', String(b.dataset.page === name));
-    /* The top tech banner, the race and their slim bar show on Overview only (Dillon, Nov 8). */
+    /* The top tech banner, the race and their slim bar show on Overview only (Dillon, Nov 8), and start folded into the bar (Dillon, Nov 11). */
     const bar = document.getElementById('spot-bar'), spot = document.getElementById('spotlight');
-    if (bar && spot) { const ov = name === 'overview'; bar.hidden = !ov; spot.hidden = !ov; bar.setAttribute('aria-expanded', String(ov)); }
+    if (bar && spot) { const ov = name === 'overview'; bar.hidden = !ov; spot.hidden = true; bar.setAttribute('aria-expanded', 'false'); }
   };
   { const bar = document.getElementById('spot-bar');
     if (bar) bar.addEventListener('click', () => { const spot = document.getElementById('spotlight'); const open = spot.hidden; spot.hidden = !open; bar.setAttribute('aria-expanded', String(open)); }); }
