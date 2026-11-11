@@ -787,6 +787,9 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   .sc-qm-tube .bub { position: absolute; bottom: 2px; width: 4px; height: 4px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #fff, color-mix(in srgb, #fff 40%, transparent)); opacity: 0; animation: scQmBub 3.4s ease-in infinite; }
   .sc-qm-tube .tick { position: absolute; top: 0; bottom: 0; width: 1px; background: color-mix(in srgb, var(--color-fg) 22%, transparent); }
   .sc-qm-tube .goal { position: absolute; top: -1px; bottom: -1px; width: 0; border-left: 2px dashed var(--color-fg); opacity: .7; z-index: 2; }
+  /* Tech card bars: same look, no motion (Dillon, Nov 11: too much draw on phones). */
+  .sc-qm-tube.thin .liq .wv, .sc-qm-tube.thin .front, .sc-qm-tube.thin .edge { animation: none !important; }
+  .sc-qm-tube.thin .liq, .sc-qm-tube.thin .front, .sc-qm-tube.thin .edge { transition: none !important; }
   .sc-qm-vial { display: block; width: 100%; height: 92px; touch-action: pan-y; cursor: pointer; margin-top: -4px; }
   .sc-qm-scale.vial { margin: -16px 13.5px 0; }
   .sc-qm-scale { position: relative; height: 14px; font-size: 10.5px; color: var(--color-fg-muted); font-variant-numeric: tabular-nums; }
@@ -2571,7 +2574,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     const e = fbEl('i', 'edge'); tb.appendChild(e);
     const w = Math.max(0, Math.min(100, pct)); const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const set = () => { liq.style.width = w + '%'; liq.classList.toggle('full', w >= 100); fr.style.left = 'calc(' + w + '% - 1px)'; e.style.left = w + '%'; const show = w > 0 && w < 100; e.style.display = fr.style.display = show ? '' : 'none'; };
-    if (still) set(); else requestAnimationFrame(() => requestAnimationFrame(set));
+    if (still || thin) set(); else requestAnimationFrame(() => requestAnimationFrame(set));
     return tb; };
   const qmCredit = (r) => Math.min(QM_NEED, r.ra) + Math.min(QM_NEED, r.atf);
   /* Glass vial for the Monthly QCs team bar (Dillon, Nov 11): canvas drawing with a simple wave simulation, so the liquid
