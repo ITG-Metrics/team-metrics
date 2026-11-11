@@ -697,7 +697,28 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   .sc-rep-lock .msg { color: var(--color-bad); font-weight: 600; }
   .sc-rep-tbl td.acct { font-variant-numeric: tabular-nums; }
   .sc-rep-tbl td.acct.multi { color: var(--color-bad); font-weight: 600; }
-  .sc-rep-tbl td.acct .x { font-size: var(--cds-font-size-caption); }
+  .sc-rep-tbl td.acct { cursor: text; }
+  .sc-rep-tbl td.acct .num, .sc-rep-acctnum { user-select: all; -webkit-user-select: all; cursor: text; }
+  .sc-rep-chainbtn { all: unset; cursor: pointer; margin-left: 6px; padding: 0 7px; border-radius: 999px; border: 1px solid currentColor; font-size: var(--cds-font-size-caption); font-weight: 700; line-height: 1.5; }
+  .sc-rep-chainbtn:hover { background: color-mix(in srgb, var(--color-bad) 12%, transparent); }
+  .sc-rep-chainbtn:focus-visible { outline: 2px solid var(--cds-chart-axis); outline-offset: 2px; }
+  dialog.sc-rep-dlg { border: 1px solid var(--color-border-line); border-radius: 12px; padding: 0; background: var(--color-bg); color: var(--color-fg); width: min(94vw, 640px); max-height: 90vh; box-shadow: var(--cds-shadow-popover); }
+  dialog.sc-rep-dlg::backdrop { background: rgba(10, 12, 16, .6); }
+  .sc-rep-dlg .hd { position: sticky; top: 0; background: var(--color-bg); display: flex; justify-content: space-between; align-items: start; gap: 12px; padding: 14px 16px 10px; border-bottom: 1px solid var(--color-border-line); }
+  .sc-rep-dlg .hd h3 { margin: 0; font-size: var(--cds-font-size-heading); }
+  .sc-rep-dlg .hd .sub { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); margin-top: 2px; }
+  .sc-rep-dlg .x { all: unset; cursor: pointer; font-size: var(--cds-font-size-caption); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+  .sc-rep-dlg .x:focus-visible { outline: 2px solid var(--cds-chart-axis); outline-offset: 2px; }
+  .sc-rep-dlg .bd { padding: 12px 16px 16px; display: grid; gap: 10px; overflow: auto; }
+  .sc-rep-step { border: 1px solid var(--color-border-line); border-left: 4px solid var(--color-bad); border-radius: 8px; background: var(--color-panel); padding: 10px 12px; display: grid; gap: 6px; }
+  .sc-rep-step.mid { border-left-color: var(--color-warn); } .sc-rep-step.ok { border-left-color: var(--color-ok); }
+  .sc-rep-step .top { display: flex; justify-content: space-between; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .sc-rep-step .who { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+  .sc-rep-step .who .nm { font-weight: 400; color: var(--color-fg-muted); }
+  .sc-rep-step .n { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+  .sc-rep-link { text-align: center; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); line-height: 1.4; }
+  .sc-rep-link b { color: var(--color-fg); }
+  .sc-rep-dlg .note { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
   .sc-rep-count { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
 </style>
 
@@ -2530,6 +2551,35 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
       f.onsubmit = async (e) => { e.preventDefault(); msg.textContent = 'Checking…'; const ok = await repUnlock(inp.value); inp.value = ''; if (ok) repRefresh(); else { msg.textContent = 'Wrong passcode'; inp.focus(); } };
       f.append(inp, go, msg); box.appendChild(f); inp.focus(); };
     el.appendChild(box); };
+  /* Pop-up with every repeat on one account, oldest first, linking each repeat visit to our tech's job when it is one (Dillon, Nov 10). */
+  const repChain = (acct, opener) => {
+    const all = (repRows() || []).filter((r) => repAcctOf(r) === acct).sort((a, b) => a.d1 < b.d1 ? -1 : a.d1 > b.d1 ? 1 : a.d2 < b.d2 ? -1 : a.d2 > b.d2 ? 1 : 0); if (!all.length) return;
+    const dlg = fbEl('dialog', 'sc-rep-dlg'); dlg.setAttribute('aria-label', 'Account history');
+    const hd = fbEl('div', 'hd'), tt = fbEl('div'); const h = fbEl('h3'); h.appendChild(fbEl('span', null, 'Account ')); const an = fbEl('span', 'sc-rep-acctnum', acct); an.dataset.noTr = '1'; h.appendChild(an); tt.appendChild(h);
+    tt.appendChild(fbEl('div', 'sub', 'This account came back ' + all.length + ' times')); const x = fbEl('button', 'x', 'Close'); x.type = 'button'; x.onclick = () => dlg.close(); hd.append(tt, x);
+    const bd = fbEl('div', 'bd');
+    all.forEach((r, i) => {
+      const st = fbEl('div', 'sc-rep-step' + (r.days <= 3 ? '' : r.days <= 10 ? ' mid' : ' ok'));
+      const top = fbEl('div', 'top'), who = fbEl('span', 'who'); who.appendChild(SC.av(r.tech, 26)); who.appendChild(fbEl('span', null, 'Tech ' + r.tech)); if (SC.names && SC.names[r.tech]) { const nm = fbEl('span', 'nm', SC.names[r.tech]); nm.dataset.noTr = '1'; who.appendChild(nm); }
+      top.append(fbEl('span', 'n', 'Visit ' + (i + 1)), who); st.appendChild(top);
+      const dl = fbEl('dl', 'sc-rep-kv');
+      [['Our visit', fbmd(r.d1), true], ['Type', r.type], ['First visit', r.job], ['Our fix', r.fix1], ['Came back for', r.why], ['Repeat visit', fbmd(r.d2) + ' · ' + r.days + (r.days === 1 ? ' day' : ' days') + ' later', true], ['Next tech’s fix', r.fix2]]
+        .forEach(([k, v, tr]) => { const dd = fbEl('dd'); if (tr) dd.textContent = v; else dd.appendChild(repCode(v || '—')); dl.append(fbEl('dt', null, k), dd); });
+      st.appendChild(dl); bd.appendChild(st);
+      const nx = all.find((s, k) => k > i && s.d1 === r.d2);
+      const ln = fbEl('div', 'sc-rep-link');
+      if (nx) ln.textContent = 'The repeat on ' + fbmd(r.d2) + ' was Tech ' + nx.tech + '’s job, shown next.';
+      else if (i < all.length - 1) ln.textContent = 'Who ran the repeat on ' + fbmd(r.d2) + ' isn’t in this report.';
+      else ln.textContent = 'Last known visit: the repeat on ' + fbmd(r.d2) + ' (' + (r.fix2 || '—') + ').';
+      bd.appendChild(ln);
+    });
+    bd.appendChild(fbEl('p', 'note', 'Only repeats on this team’s jobs are listed. Who ran a repeat visit is only known when that visit was one of our jobs that came back too.'));
+    dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+    dlg.addEventListener('close', () => { dlg.remove(); if (opener) opener.focus(); });
+    dlg.append(hd, bd); document.body.appendChild(dlg); dlg.showModal(); x.focus();
+  };
+  const repChainBtn = (acct, n) => { const b = fbEl('button', 'sc-rep-chainbtn', '×' + n); b.type = 'button'; b.title = 'This account came back ' + n + ' times'; b.setAttribute('aria-label', 'This account came back ' + n + ' times');
+    b.onclick = (e) => { e.stopPropagation(); repChain(acct, b); }; return b; };
   /* One repeat as a small card */
   const repItem = (r, withTech) => {
     const it = fbEl('div', 'sc-tc-item' + (r.days <= 7 ? ' bad' : r.days <= 14 ? ' mid' : ''));
@@ -2537,7 +2587,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     left.append(fbEl('span', null, fbmd(r.d1)), document.createTextNode(' · '), withTech ? fbEl('span', null, 'Tech ' + r.tech) : repCode(r.type));
     m.append(left, fbEl('b', null, r.days + (r.days === 1 ? ' day' : ' days'))); it.appendChild(m);
     const dl = fbEl('dl', 'sc-rep-kv');
-    [].concat(SC.repAcct ? [['Account', repAcctOf(r)]] : [], [['First visit', r.job], ['Our fix', r.fix1], ['Came back for', r.why], ['Next tech’s fix', r.fix2]]).forEach(([k, v]) => { const dd = fbEl('dd'); dd.appendChild(repCode(v || '—')); dl.append(fbEl('dt', null, k), dd); });
+    [].concat(SC.repAcct ? [['Account', repAcctOf(r)]] : [], [['First visit', r.job], ['Our fix', r.fix1], ['Came back for', r.why], ['Next tech’s fix', r.fix2]]).forEach(([k, v]) => { const dd = fbEl('dd'); const c = repCode(v || '—'); if (k === 'Account') { c.classList.add('sc-rep-acctnum'); const n = repAcctCounts(repRows() || []).get(v); dd.appendChild(c); if (n > 1) dd.appendChild(repChainBtn(v, n)); } else dd.appendChild(c); dl.append(fbEl('dt', null, k), dd); });
     it.appendChild(dl); return it;
   };
   const repTopBox = (title, list) => { const b = fbEl('div', 'sc-rep-top'); b.appendChild(fbEl('h5', null, title)); const ol = fbEl('ol');
@@ -2562,7 +2612,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     ms.forEach((m) => sum.appendChild(fbEl('span', null, m + ': ' + mine.filter((r) => r.fm === m).length)));
     sum.appendChild(fbEl('span', fast ? 'hot' : null, fast + ' within 7 days'));
     el.appendChild(sum); repLockBox(el);
-    if (SC.repAcct) { const ac = [...repAcctCounts(mine).entries()].filter(([, c]) => c > 1); if (ac.length) { const n = fbEl('div', 'sc-rep-sum'); n.appendChild(fbEl('span', 'hot', ac.length + (ac.length === 1 ? ' account came back more than once: ' : ' accounts came back more than once: '))); const s = fbEl('span', null, ac.map(([a, c]) => a + ' ×' + c).join(', ')); s.dataset.noTr = '1'; n.appendChild(s); el.appendChild(n); } }
+    if (SC.repAcct) { const ac = [...repAcctCounts(mine).entries()].filter(([, c]) => c > 1); if (ac.length) { const n = fbEl('div', 'sc-rep-sum'); n.appendChild(fbEl('span', 'hot', ac.length + (ac.length === 1 ? ' account came back more than once: ' : ' accounts came back more than once: '))); const s = fbEl('span'); s.dataset.noTr = '1'; ac.forEach(([a, c], k) => { if (k) s.appendChild(document.createTextNode(', ')); s.appendChild(fbEl('span', 'sc-rep-acctnum', a)); s.appendChild(repChainBtn(a, c)); }); n.appendChild(s); el.appendChild(n); } }
     const w = SC.repWatch(mine, all); if (w.length) { const ul = fbEl('ul', 'sc-rep-watch'); w.forEach((s) => ul.appendChild(fbEl('li', null, s))); el.appendChild(ul); }
     const tops = fbEl('div', 'sc-rep-tops');
     tops.append(repTopBox('Repeats started as', repTop(mine, (r) => r.job)), repTopBox('Our fix on those jobs', repTop(mine, (r) => r.fix1)), repTopBox('Next tech’s fix', repTop(mine, (r) => r.fix2)));
@@ -2666,7 +2716,8 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     const cap = SC.rep.listAll ? rs.length : 40;
     rs.slice(0, cap).forEach((r) => { const tr = fbEl('tr', 'click');
       tr.appendChild(fbEl('td', 'l', fbmd(r.d1))); const tt = fbEl('td', 'l tech', r.tech); if (SC.names && SC.names[r.tech]) tt.title = SC.names[r.tech]; tr.appendChild(tt);
-      if (SC.repAcct) { const a = repAcctOf(r), td = fbEl('td', 'l acct', a || '—'); td.dataset.noTr = '1'; if (a && ac.get(a) > 1) { td.classList.add('multi'); td.title = 'This account came back ' + ac.get(a) + ' times'; td.appendChild(fbEl('span', 'x', ' ×' + ac.get(a))); } tr.appendChild(td); }
+      if (SC.repAcct) { const a = repAcctOf(r), td = fbEl('td', 'l acct'); td.dataset.noTr = '1'; td.appendChild(fbEl('span', 'num', a || '—')); td.addEventListener('click', (e) => e.stopPropagation());
+        if (a && ac.get(a) > 1) { td.classList.add('multi'); td.appendChild(repChainBtn(a, ac.get(a))); } tr.appendChild(td); }
       [[r.type, 'l hide-sm'], [r.job, 'l'], [r.fix1, 'l'], [r.why, 'l hide-sm'], [r.fix2, 'l']].forEach(([v, c]) => { const td = fbEl('td', c, v || '—'); td.dataset.noTr = '1'; tr.appendChild(td); });
       tr.appendChild(fbEl('td', 'd' + (r.days <= 7 ? ' fast' : ''), String(r.days)));
       tr.onclick = () => { SC.rep.tech = SC.rep.tech === r.tech ? null : r.tech; repRedraw(); window.scrollTo({ top: 0, behavior: 'smooth' }); }; tb.appendChild(tr); });
@@ -2951,6 +3002,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     'No clear patterns yet with these filters. A tech needs at least 3 repeats before anything is called out.': 'Todavía no hay patrones claros con estos filtros. Un técnico necesita al menos 3 repeticiones antes de señalar algo.',
     'No repeats with these filters.': 'No hay repeticiones con estos filtros.', 'Our fix:': 'Nuestro código:', 'Came back for:': 'Volvió por:', 'Next tech’s fix:': 'Código del siguiente técnico:',
     'Most repeated job type': 'Tipo de trabajo más repetido', 'Our visit': 'Nuestra visita', 'Type': 'Tipo', 'Days': 'Días',
+    'Account history': 'Historial de la cuenta', 'Repeat visit': 'Visita de repetición', 'Only repeats on this team’s jobs are listed. Who ran a repeat visit is only known when that visit was one of our jobs that came back too.': 'Solo se muestran las repeticiones en trabajos de este equipo. Quién hizo una visita de repetición solo se sabe cuando esa visita fue un trabajo nuestro que también volvió.',
     'Account': 'Cuenta', '🔒 Show account numbers': '🔒 Mostrar números de cuenta', '🔓 Account numbers shown': '🔓 Números de cuenta visibles', 'Hide account numbers': 'Ocultar números de cuenta',
     'Passcode': 'Código', 'Unlock': 'Desbloquear', 'Checking…': 'Verificando…', 'Wrong passcode': 'Código incorrecto',
     /* Tech card (Nov 10) */
@@ -3072,6 +3124,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     'No clear patterns yet with these filters. A tech needs at least 3 repeats before anything is called out.': 'Poko gen modèl klè ak filt sa yo. Yon teknisyen bezwen omwen 3 repetisyon anvan nou make anyen.',
     'No repeats with these filters.': 'Pa gen repetisyon ak filt sa yo.', 'Our fix:': 'Kòd nou:', 'Came back for:': 'Tounen pou:', 'Next tech’s fix:': 'Kòd lòt teknisyen an:',
     'Most repeated job type': 'Kalite travay ki repete pi plis', 'Our visit': 'Vizit nou', 'Type': 'Kalite', 'Days': 'Jou',
+    'Account history': 'Istwa kont lan', 'Repeat visit': 'Vizit repetisyon', 'Only repeats on this team’s jobs are listed. Who ran a repeat visit is only known when that visit was one of our jobs that came back too.': 'Se sèlman repetisyon sou travay ekip sa a ki parèt. Nou konnen kiyès ki te fè yon vizit repetisyon sèlman lè vizit sa a te youn nan travay nou ki tounen tou.',
     'Account': 'Kont', '🔒 Show account numbers': '🔒 Montre nimewo kont yo', '🔓 Account numbers shown': '🔓 Nimewo kont yo parèt', 'Hide account numbers': 'Kache nimewo kont yo',
     'Passcode': 'Kòd', 'Unlock': 'Debloke', 'Checking…': 'N ap verifye…', 'Wrong passcode': 'Kòd la pa bon',
     /* Tech card (Nov 10) */
@@ -3282,6 +3335,11 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     [/^(\d+) repeats?$/, (m) => `${m[1]} repetisyon`],
     [/^(\d+) accounts? came back more than once:$/, (m) => `${m[1]} kont tounen plis pase yon fwa:`],
     [/^This account came back (\d+) times$/, (m) => `Kont sa a tounen ${m[1]} fwa`],
+    [/^Visit (\d+)$/, (m) => `Vizit ${m[1]}`],
+    [/^([A-Z][a-z]{2}) (\d{1,2}) · (\d+) days? later$/, (m) => `${m[2]} ${moh(m[1])} · ${m[3]} jou apre`],
+    [/^The repeat on ([A-Z][a-z]{2}) (\d{1,2}) was Tech (\w+)’s job, shown next\.$/, (m) => `Repetisyon ${m[2]} ${moh(m[1])} an se te yon travay teknisyen ${m[3]}, ki parèt anba a.`],
+    [/^Who ran the repeat on ([A-Z][a-z]{2}) (\d{1,2}) isn’t in this report\.$/, (m) => `Rapò a pa di kiyès ki te fè repetisyon ${m[2]} ${moh(m[1])} an.`],
+    [/^Last known visit: the repeat on ([A-Z][a-z]{2}) (\d{1,2}) \((.+)\)\.$/, (m) => `Dènye vizit nou konnen: repetisyon ${m[2]} ${moh(m[1])} an (${m[3]}).`],
     [/^(\d+) days?$/, (m) => `${m[1]} jou`],
     [/^(\d+) within 7 days$/, (m) => `${m[1]} nan 7 jou oswa mwens`],
     [/^([A-Z][a-z]{2} FM(?: \(to date\))?): (\d+)$/, (m) => `${labelHT(m[1]) || m[1]}: ${m[2]}`],
@@ -3400,6 +3458,11 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     [/^(\d+) repeats?$/, (m) => `${m[1]} ${m[1] === '1' ? 'repetición' : 'repeticiones'}`],
     [/^(\d+) accounts? came back more than once:$/, (m) => `${m[1]} ${m[1] === '1' ? 'cuenta volvió' : 'cuentas volvieron'} más de una vez:`],
     [/^This account came back (\d+) times$/, (m) => `Esta cuenta volvió ${m[1]} veces`],
+    [/^Visit (\d+)$/, (m) => `Visita ${m[1]}`],
+    [/^([A-Z][a-z]{2}) (\d{1,2}) · (\d+) days? later$/, (m) => `${m[2]} ${mo(m[1])} · ${m[3]} ${m[3] === '1' ? 'día' : 'días'} después`],
+    [/^The repeat on ([A-Z][a-z]{2}) (\d{1,2}) was Tech (\w+)’s job, shown next\.$/, (m) => `La repetición del ${m[2]} ${mo(m[1])} fue un trabajo del técnico ${m[3]}, que se muestra a continuación.`],
+    [/^Who ran the repeat on ([A-Z][a-z]{2}) (\d{1,2}) isn’t in this report\.$/, (m) => `Este reporte no dice quién hizo la repetición del ${m[2]} ${mo(m[1])}.`],
+    [/^Last known visit: the repeat on ([A-Z][a-z]{2}) (\d{1,2}) \((.+)\)\.$/, (m) => `Última visita conocida: la repetición del ${m[2]} ${mo(m[1])} (${m[3]}).`],
     [/^(\d+) days?$/, (m) => `${m[1]} ${m[1] === '1' ? 'día' : 'días'}`],
     [/^(\d+) within 7 days$/, (m) => `${m[1]} en 7 días o menos`],
     [/^([A-Z][a-z]{2} FM(?: \(to date\))?): (\d+)$/, (m) => `${label(m[1]) || m[1]}: ${m[2]}`],
