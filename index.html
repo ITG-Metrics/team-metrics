@@ -1220,8 +1220,8 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
         <button type="button" data-market="Dade" aria-pressed="false">Dade</button>
       </div>
       <div class="sc-pills small" role="group" aria-label="Timeframe">
-        <button type="button" data-mkwin="1" aria-pressed="false">This month</button>
-        <button type="button" data-mkwin="3" aria-pressed="true">3 months</button>
+        <button type="button" data-mkwin="1" aria-pressed="true">This month</button>
+        <button type="button" data-mkwin="3" aria-pressed="false">3 months</button>
         <button type="button" data-mkwin="6" aria-pressed="false">6 months</button>
       </div>
     </div>
@@ -3333,7 +3333,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     el.append(head, mk('p', 'sc-note', note), frame); if (slides.length > 1) el.appendChild(dots); go(0);
   };
   /* Market leaders: every tech in the Broward or Dade market, ranked by the race score. */
-  SC.mk = { market: 'Broward', win: 3 };
+  SC.mk = { market: 'Broward', win: 1 };
   const mkRows = (off = 0) => {
     const d = dash.data('market'); if (d.status !== 'ok' || !d.data.length) return null;
     const rows = d.data.filter((r) => r.market === SC.mk.market);
