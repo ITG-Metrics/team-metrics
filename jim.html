@@ -802,6 +802,20 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   .sc-qm-card .tube-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
   .sc-qm-card .tube-row .pc { font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; color: var(--qm-c); font-weight: 600; }
   @media (prefers-reduced-motion: reduce) { .sc-qm-tube .liq .wv, .sc-qm-tube .front, .sc-qm-tube .edge { animation: none !important; } .sc-qm-tube .bub { display: none; } .sc-qm-tube .liq, .sc-qm-tube .edge, .sc-qm-tube .front { transition: none; } }
+  /* Overview hero: Tool usage, tNPS and FTR side by side with glass orbs (Nov 11), like the Market Metrics page. */
+  .sc-hero { display: grid; gap: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .sc-hero-card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: calc(var(--cds-radius) * 1.4); padding: 18px 20px; display: flex; align-items: center; gap: 20px; min-width: 0; }
+  .sc-hero-txt { display: grid; gap: 4px; min-width: 0; }
+  .sc-hero-k { font-size: 13px; color: var(--color-fg-muted); display: flex; align-items: center; gap: 7px; }
+  .sc-hero-k i { width: 8px; height: 8px; border-radius: 50%; background: var(--hc, var(--color-fg-muted)); display: inline-block; }
+  .sc-hero-v { font-family: var(--font-anthropic-serif); font-size: 46px; line-height: 1; font-variant-numeric: tabular-nums; color: var(--hc, var(--color-fg)); }
+  .sc-hero-tags { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12.5px; color: var(--color-fg-muted); font-variant-numeric: tabular-nums; }
+  .sc-hero-tags .sc-delta { font-size: inherit; }
+  .sc-hero-card.good { --hc: var(--color-ok); } .sc-hero-card.near { --hc: #9a7408; } .sc-hero-card.bad { --hc: var(--color-bad); }
+  :root[data-theme="dark"] .sc-hero-card.near { --hc: #e3b21f; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sc-hero-card.near { --hc: #e3b21f; } }
+  @media (max-width: 60rem) { .sc-hero-card { flex-direction: column; text-align: center; padding: 14px 10px; gap: 10px; } .sc-hero-k, .sc-hero-tags { justify-content: center; } .sc-hero-v { font-size: 36px; } }
+  @media (max-width: 34rem) { .sc-hero { gap: 6px; } .sc-hero-card { padding: 10px 4px; gap: 8px; } .sc-hero-k { font-size: 12px; } .sc-hero-v { font-size: 22px; } .sc-hero-tags { font-size: 10.5px; flex-direction: column; gap: 1px; } }
   /* Ribbon flow (preview): where repeats come from */
   .sc-flow-card { overflow: hidden; }
   .sc-flow { display: block; width: 100%; height: auto; overflow: visible; }
@@ -877,37 +891,49 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
 
   <!-- OVERVIEW -->
   <section class="sc-page" id="page-overview" data-page="overview">
+    <!-- The three company targets side by side at the top, with the glass orbs (Dillon, Nov 11: same layout as the Market Metrics page). -->
+    <div class="sc-hero">
+      <div class="sc-hero-card" data-hero="tu">
+        <div class="sc-orbwrap" data-draw="orb" data-kpi="tu" data-size="auto" data-source="team_latest"></div>
+        <div class="sc-hero-txt">
+          <span class="sc-hero-k"><i></i>Tool usage</span>
+          <span class="sc-hero-v" data-draw="kpi" data-kpi="tu" data-source="team_latest" data-field="tu" data-row="0">—</span>
+          <div class="sc-hero-tags"><span>Target <span data-draw="target" data-kpi="tu">—</span></span><span class="sc-delta" data-draw="delta" data-kpi="tu" data-source="team_latest" data-field="d_tu" data-row="0">—</span></div>
+        </div>
+      </div>
+      <div class="sc-hero-card" data-hero="tnps">
+        <div class="sc-orbwrap" data-draw="orb" data-kpi="tnps" data-size="auto" data-source="team_latest"></div>
+        <div class="sc-hero-txt">
+          <span class="sc-hero-k"><i></i>tNPS</span>
+          <span class="sc-hero-v" data-draw="kpi" data-kpi="tnps" data-source="team_latest" data-field="tnps" data-row="0">—</span>
+          <div class="sc-hero-tags"><span>Target <span data-draw="target" data-kpi="tnps">—</span></span><span class="sc-delta" data-draw="delta" data-kpi="tnps" data-source="team_latest" data-field="d_tnps" data-row="0">—</span></div>
+        </div>
+      </div>
+      <div class="sc-hero-card" data-hero="ftr">
+        <div class="sc-orbwrap" data-draw="orb" data-kpi="ftr" data-size="auto" data-source="team_latest"></div>
+        <div class="sc-hero-txt">
+          <span class="sc-hero-k"><i></i>FTR</span>
+          <span class="sc-hero-v" data-draw="kpi" data-kpi="ftr" data-source="team_latest" data-field="ftr" data-row="0">—</span>
+          <div class="sc-hero-tags"><span>Target <span data-draw="target" data-kpi="ftr">—</span></span><span class="sc-delta" data-draw="delta" data-kpi="ftr" data-source="team_latest" data-field="d_ftr" data-row="0">—</span></div>
+        </div>
+      </div>
+    </div>
     <div class="sc-grid">
       <article class="sc-card">
         <h2>Tool usage</h2>
         <p class="sc-note">Share of eligible jobs where the tech ran the tool.</p>
-        <div class="sc-big-row">
-          <div class="sc-orbwrap" data-draw="orb" data-kpi="tu" data-source="team_latest"></div>
-          <div class="sc-big" data-draw="kpi" data-kpi="tu" data-source="team_latest" data-field="tu" data-row="0">—</div>
-          <div class="sc-delta" data-draw="delta" data-kpi="tu" data-source="team_latest" data-field="d_tu" data-row="0">—</div>
-        </div>
         <div class="sc-meta"><span>Target <span data-draw="target" data-kpi="tu">—</span></span><span data-draw="kpipill" data-kpi="tu" data-source="team_latest">—</span></div>
         <div class="sc-chart" data-draw="trend" data-kpi="tu" data-source="team_by_period"></div>
       </article>
       <article class="sc-card">
         <h2>tNPS</h2>
         <p class="sc-note">Promoters minus detractors, as a share of all surveys.</p>
-        <div class="sc-big-row">
-          <div class="sc-orbwrap" data-draw="orb" data-kpi="tnps" data-source="team_latest"></div>
-          <div class="sc-big" data-draw="kpi" data-kpi="tnps" data-source="team_latest" data-field="tnps" data-row="0">—</div>
-          <div class="sc-delta" data-draw="delta" data-kpi="tnps" data-source="team_latest" data-field="d_tnps" data-row="0">—</div>
-        </div>
         <div class="sc-meta"><span>Target <span data-draw="target" data-kpi="tnps">—</span></span><span data-draw="kpipill" data-kpi="tnps" data-source="team_latest">—</span></div>
         <div class="sc-chart" data-draw="trend" data-kpi="tnps" data-source="team_by_period"></div>
       </article>
       <article class="sc-card">
         <h2>FTR</h2>
         <p class="sc-note">Share of jobs fixed the first time, with no repeat visit.</p>
-        <div class="sc-big-row">
-          <div class="sc-orbwrap" data-draw="orb" data-kpi="ftr" data-source="team_latest"></div>
-          <div class="sc-big" data-draw="kpi" data-kpi="ftr" data-source="team_latest" data-field="ftr" data-row="0">—</div>
-          <div class="sc-delta" data-draw="delta" data-kpi="ftr" data-source="team_latest" data-field="d_ftr" data-row="0">—</div>
-        </div>
         <div class="sc-meta"><span>Target <span data-draw="target" data-kpi="ftr">—</span></span><span data-draw="kpipill" data-kpi="ftr" data-source="team_latest">—</span></div>
         <div class="sc-chart" data-draw="trend" data-kpi="ftr" data-source="team_by_period"></div>
       </article>
@@ -1809,7 +1835,11 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
       w.title = v == null ? '' : 'Filled to ' + SC.pct(v) + '; the notches on the glass mark the ' + SC.tgt(T) + ' target';
       w.appendChild(makeOrb(v == null ? T - 12 : v, T, size).cv); return w; };
   })();
-  dash.draw('orb', (el) => { el.replaceChildren(); const r = latest(); const k = el.dataset.kpi; if (!r) return; el.appendChild(SC.orb(r[k], SC.T[k], +(el.dataset.size || 92)).firstChild); });
+  dash.draw('orb', (el) => { el.replaceChildren(); const r = latest(); const k = el.dataset.kpi; if (!r) return;
+    const w = window.innerWidth, size = el.dataset.size === 'auto' ? (w < 544 ? Math.max(70, Math.min(96, Math.floor((w - 60) / 3 - 14))) : w < 960 ? 110 : 136) : +(el.dataset.size || 92);
+    el.appendChild(SC.orb(r[k], SC.T[k], size).firstChild);
+    const card = el.closest('.sc-hero-card'), v = r[k], T = SC.T[k];
+    if (card) { card.classList.remove('good', 'near', 'bad'); if (v != null) card.classList.add(v >= T ? 'good' : T - v <= 1 ? 'near' : 'bad'); } });
   dash.draw('kpi', (el) => { const r = latest(); el.textContent = r ? SC.pct(r[el.dataset.kpi]) : '—'; });
   dash.draw('delta', (el) => {
     const r = latest(); const k = el.dataset.kpi;
