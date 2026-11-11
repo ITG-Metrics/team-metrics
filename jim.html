@@ -741,6 +741,25 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   .sc-tc-kpi.has-orb { grid-template-columns: auto minmax(0, 1fr); column-gap: 12px; align-items: center; }
   .sc-tc-kpi.has-orb .sc-orbwrap { grid-row: 1 / span 3; }
   @media (prefers-reduced-motion: reduce) { .sc-orb .wv, .sc-orb .wv2, .sc-flow .spark, .sc-flow .tw { animation: none !important; } .sc-orb .bb { display: none; } }
+  /* Monthly QCs (Dillon's own, 2 RA + 2 ATF per tech each fiscal month), Nov 10 */
+  .sc-qm { display: grid; gap: 10px; }
+  .sc-qm-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr)); }
+  .sc-qm-card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-left: 4px solid var(--color-warn); border-radius: var(--cds-radius); padding: 10px 12px; display: grid; gap: 7px; }
+  .sc-qm-card.done { border-left-color: var(--color-ok); }
+  .sc-qm-card.late { border-left-color: var(--color-bad); }
+  .sc-qm-card .top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 8px; }
+  .sc-qm-card .who { display: inline-flex; align-items: center; gap: 7px; min-width: 0; font-weight: 600; }
+  .sc-qm-card .who .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sc-qm-card .who .id { color: var(--color-fg-muted); font-weight: 400; font-size: var(--cds-font-size-caption); }
+  .sc-qm-pill { font-size: var(--cds-font-size-caption); font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap; color: var(--color-warn); background: color-mix(in srgb, var(--color-warn) 14%, transparent); }
+  .done .sc-qm-pill { color: var(--color-ok); background: color-mix(in srgb, var(--color-ok) 14%, transparent); }
+  .late .sc-qm-pill { color: var(--color-bad); background: color-mix(in srgb, var(--color-bad) 14%, transparent); }
+  .sc-qm-row { display: grid; grid-template-columns: 7.2rem auto minmax(0, 1fr); gap: 8px; align-items: center; font-size: var(--cds-font-size-body); }
+  .sc-qm-row .k { color: var(--color-fg-muted); }
+  .sc-qm-row .n { color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; }
+  .sc-qm-slots { display: inline-flex; gap: 5px; }
+  .sc-qm-slots i { width: 15px; height: 15px; border-radius: 50%; border: 2px dashed var(--color-border-line); box-sizing: border-box; }
+  .sc-qm-slots i.on { border: 0; background: var(--color-ok); }
   /* Ribbon flow (preview): where repeats come from */
   .sc-flow-card { overflow: hidden; }
   .sc-flow { display: block; width: 100%; height: auto; overflow: visible; }
@@ -1057,6 +1076,13 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
 
   <!-- QC -->
   <section class="sc-page" id="page-qc" data-page="qc" hidden>
+    <div class="sc-qm" id="qc-month" hidden>
+      <div>
+        <h2 class="sc-h2">Monthly QCs</h2>
+        <p class="sc-note" data-draw="qmnote" data-source="qc_month qc_month_period">—</p>
+      </div>
+      <div class="sc-qm-grid" data-draw="qmcards" data-source="qc_month qc_month_period tech_table"></div>
+    </div>
     <div>
       <h2 class="sc-h2">QC observations by other observers</h2>
       <p class="sc-note" data-draw="qcnote" data-source="qc">—</p>
@@ -2465,6 +2491,29 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     const end = rs.length && rs[0].pulled ? rs[0].pulled : null;
     if (!end) { el.textContent = 'No QCs by other observers in the last 30 days.'; return; }
     el.textContent = 'Completed QCs on our techs from ' + fbmd(qcAdd(end, -30)) + ' to ' + fbmd(end) + ', done by anyone other than Jim Blanco Mitchell or Dillon Defaria. Pulled from Catalyst QMS.'; });
+  /* Monthly QCs: Dillon's own Ride Along / After the Fact QCs this fiscal month, 2 of each per tech. */
+  const QM_NEED = 2, QM_LATE = 5;
+  const qmPer = () => { const d = dash.data('qc_month_period'); return d.status === 'ok' && d.data[0] ? d.data[0] : null; };
+  const qmDaysLeft = (p) => { const [y, m, d] = p.end.split('-').map(Number); const n = new Date(); const t = new Date(n.getFullYear(), n.getMonth(), n.getDate()); return Math.max(0, Math.round((new Date(y, m - 1, d) - t) / 864e5) + 1); };
+  dash.draw('qmnote', (el) => { const p = qmPer(); if (!p) { el.textContent = '—'; return; }
+    const left = qmDaysLeft(p);
+    el.textContent = 'Ride Along and After the Fact QCs done by Dillon Defaria in the fiscal month ' + fbmd(p.start) + ' to ' + fbmd(p.end) + '. Each tech needs 2 of each. ' + (left === 1 ? '1 day left.' : left + ' days left.') + (p.synced ? ' Synced from Catalyst QMS ' + new Date(p.synced).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '.' : ''); });
+  dash.draw('qmcards', (el) => {
+    el.replaceChildren(); const p = qmPer(), q = dash.data('qc_month'), t = dash.data('tech_table'); if (!p || q.status !== 'ok') return;
+    const ids = t.status === 'ok' ? t.data.map((r) => String(r.tech_id)) : [...new Set(q.data.map((r) => String(r.tech_id)))];
+    const rows = q.data.filter((r) => r.date >= p.start && r.date <= p.end), left = qmDaysLeft(p);
+    const st = ids.map((id) => { const ra = rows.filter((r) => String(r.tech_id) === id && r.qc_type === 'Ride Along').length, atf = rows.filter((r) => String(r.tech_id) === id && r.qc_type === 'After the Fact').length;
+      return { id, ra, atf, rn: Math.max(0, QM_NEED - ra), an: Math.max(0, QM_NEED - atf) }; })
+      .sort((a, b) => (b.rn + b.an) - (a.rn + a.an) || a.id.localeCompare(b.id));
+    st.forEach((r) => { const need = r.rn + r.an, card = fbEl('article', 'sc-qm-card' + (need === 0 ? ' done' : left <= QM_LATE ? ' late' : ''));
+      const top = fbEl('div', 'top'), who = fbEl('span', 'who'); who.appendChild(SC.av(r.id, 26)); const nm = fbEl('span', 'nm', SC.names[r.id] || ('Tech ' + r.id)); nm.dataset.noTr = '1'; who.appendChild(nm); const idt = fbEl('span', 'id', r.id); idt.dataset.noTr = '1'; who.appendChild(idt);
+      const parts = []; if (r.rn) parts.push(r.rn + ' RA'); if (r.an) parts.push(r.an + ' ATF');
+      top.append(who, fbEl('span', 'sc-qm-pill', need === 0 ? 'Done' : 'Needs ' + parts.join(' + '))); card.appendChild(top);
+      [['Ride Along', r.ra], ['After the Fact', r.atf]].forEach(([k, v]) => { const row = fbEl('div', 'sc-qm-row'); row.appendChild(fbEl('span', 'k', k));
+        const sl = fbEl('span', 'sc-qm-slots'); sl.setAttribute('aria-hidden', 'true'); for (let i = 0; i < QM_NEED; i++) sl.appendChild(fbEl('i', i < v ? 'on' : null));
+        row.append(sl, fbEl('span', 'n', v > QM_NEED ? QM_NEED + ' of ' + QM_NEED + ' + ' + (v - QM_NEED) + ' extra' : v + ' of ' + QM_NEED)); card.appendChild(row); });
+      el.appendChild(card); });
+  });
   dash.draw('qcsum', (el) => {
     el.replaceChildren(); const rs = qcRows(); if (!rs) return;
     const roster = qcRoster(), seen = new Set(rs.map((r) => r.tech)), sc = rs.filter((r) => r.score != null), al = rs.reduce((a, r) => a + r.alerts, 0);
@@ -3247,6 +3296,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     'Score: 60% FTR, 30% tNPS and 10% tool usage, the same as the race. A tech needs at least 40 jobs and 5 surveys in the timeframe to be ranked; the rest are in the drop-down below the ranking. Highlighted rows are techs on this team. Select a column heading to sort by it.': 'Puntaje: 60% FTR, 30% tNPS y 10% uso de herramienta, igual que la carrera. Un técnico necesita al menos 40 trabajos y 5 encuestas en el periodo para clasificar; los demás están en la lista desplegable debajo de la clasificación. Las filas resaltadas son técnicos de este equipo. Seleccione el título de una columna para ordenar por ella.',
     'Badges this month:': 'Insignias este mes:', 'Perfect tool usage': 'Uso perfecto de herramienta', '5 promoters in a row': '5 promotores seguidos', 'Zero repeats': 'Cero repeticiones', 'Most improved FTR': 'FTR que más mejoró', 'Comment of the week': 'Comentario de la semana', 'Team tNPS this month': 'tNPS del equipo este mes', 'new': 'nuevo',
     'Top tech': 'Mejor técnico', 'Race leader': 'Líder de la carrera', 'Show': 'Mostrar', 'Hide': 'Ocultar',
+    'Monthly QCs': 'QC del mes', 'Ride Along': 'Acompañamiento', 'After the Fact': 'Después del trabajo', 'Done': 'Listo',
     'QC observations by other observers': 'Observaciones de QC hechas por otros observadores', 'QCs by tech': 'QC por técnico',
     'Select a tech to see only theirs.': 'Selecciona un técnico para ver solo los suyos.', 'All QCs': 'Todos los QC',
     'Newest first. Select Photos to see the pictures from each QC. Photos that show a house number or other customer details are left out.': 'Los más recientes primero. Selecciona Fotos para ver las fotos de cada QC. No se incluyen las fotos que muestran un número de casa u otros datos del cliente.', 'Photos': 'Fotos', 'Close': 'Cerrar', 'Previous photo': 'Foto anterior', 'Next photo': 'Foto siguiente',
@@ -3390,6 +3440,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     'Knowledgeable': 'Konn travay li', 'Professional': 'Pwofesyonèl', 'Friendly and pleasant': 'Janti e agreyab', 'Helpful': 'Ede anpil',
     'Quick and on time': 'Rapid e alè', 'Explained things': 'Te esplike bagay yo', 'Fixed the problem': 'Te ranje pwoblèm nan', 'Score': 'Nòt',
     'Comments': 'Kòmantè', 'Average score': 'Nòt mwayèn', 'Out of 10': 'Sou 10',
+    'Monthly QCs': 'QC chak mwa', 'Ride Along': 'Akonpayman', 'After the Fact': 'Apre travay la', 'Done': 'Fini',
     'QC observations by other observers': 'Obsèvasyon QC lòt obsèvatè fè', 'QCs by tech': 'QC pa teknisyen',
     'Select a tech to see only theirs.': 'Chwazi yon teknisyen pou wè sèlman pa l yo.', 'All QCs': 'Tout QC',
     'Newest first. Select Photos to see the pictures from each QC. Photos that show a house number or other customer details are left out.': 'Sa ki pi resan yo an premye. Chwazi Foto pou wè foto chak QC. Foto ki montre nimewo kay la oswa lòt enfòmasyon kliyan an pa ladan yo.', 'Photos': 'Foto', 'Close': 'Fèmen', 'Previous photo': 'Foto anvan', 'Next photo': 'Pwochen foto',
@@ -3406,6 +3457,11 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   };
   const dateHT = (s) => s.replace(/\b([A-Z][a-z]{2}) (\d{1,2}), (\d{4})\b/g, (_, m, d, y) => `${d} ${moh(m)} ${y}`);
   const RULES_HT = [
+    /* Monthly QCs (Nov 10) */
+    [/^Needs (?:(\d) RA)?(?: \+ )?(?:(\d) ATF)?$/, (m) => 'Bezwen ' + [m[1] ? m[1] + ' akonp.' : '', m[2] ? m[2] + ' apre' : ''].filter(Boolean).join(' + ')],
+    [/^(\d+) of (\d+)$/, (m) => `${m[1]} sou ${m[2]}`],
+    [/^(\d+) of (\d+) \+ (\d+) extra$/, (m) => `${m[1]} sou ${m[2]} + ${m[3]} anplis`],
+    [/^Ride Along and After the Fact QCs done by Dillon Defaria in the fiscal month (\w{3} \d{1,2}) to (\w{3} \d{1,2})\. Each tech needs 2 of each\. (\d+) days? left\.(?: Synced from Catalyst QMS (\w{3} \d{1,2})\.)?$/, (m) => `QC akonpayman ak apre travay Dillon Defaria fè nan mwa fiskal ${m[1]} rive ${m[2]}. Chak teknisyen bezwen 2 nan chak. ${m[3] === '1' ? 'Rete 1 jou' : 'Rete ' + m[3] + ' jou'}.` + (m[4] ? ` Senkronize nan Catalyst QMS ${m[4]}.` : '')],
     /* Tech card (Nov 10) */
     [/^Rank, last (\d+) months$/, (m) => `Plas, dènye ${m[1]} mwa yo`],
     [/^of (\d+) techs$/, (m) => `sou ${m[1]} teknisyen`],
@@ -3529,6 +3585,11 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     return null;
   };
   const RULES = [
+    /* Monthly QCs (Nov 10) */
+    [/^Needs (?:(\d) RA)?(?: \+ )?(?:(\d) ATF)?$/, (m) => 'Faltan ' + [m[1] ? m[1] + ' acomp.' : '', m[2] ? m[2] + ' después' : ''].filter(Boolean).join(' + ')],
+    [/^(\d+) of (\d+)$/, (m) => `${m[1]} de ${m[2]}`],
+    [/^(\d+) of (\d+) \+ (\d+) extra$/, (m) => `${m[1]} de ${m[2]} + ${m[3]} de más`],
+    [/^Ride Along and After the Fact QCs done by Dillon Defaria in the fiscal month (\w{3} \d{1,2}) to (\w{3} \d{1,2})\. Each tech needs 2 of each\. (\d+) days? left\.(?: Synced from Catalyst QMS (\w{3} \d{1,2})\.)?$/, (m) => `QC de acompañamiento y después del trabajo hechos por Dillon Defaria en el mes fiscal del ${m[1]} al ${m[2]}. Cada técnico necesita 2 de cada uno. ${m[3] === '1' ? 'Queda 1 día' : 'Quedan ' + m[3] + ' días'}.` + (m[4] ? ` Sincronizado de Catalyst QMS el ${m[4]}.` : '')],
     /* Tech card (Nov 10) */
     [/^Rank, last (\d+) months$/, (m) => `Puesto, últimos ${m[1]} meses`],
     [/^of (\d+) techs$/, (m) => `de ${m[1]} técnicos`],
