@@ -2528,12 +2528,13 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   dash.draw('qmnote', (el) => { const p = qmPer(); if (!p) { el.textContent = '—'; return; }
     const left = qmDaysLeft(p);
     el.textContent = 'Ride Along and After the Fact QCs done by ' + (p.who || 'the supervisor') + ' in the fiscal month ' + fbmd(p.start) + ' to ' + fbmd(p.end) + '. Each tech needs 2 of each. ' + (left === 1 ? '1 day left.' : left + ' days left.') + (p.synced ? ' Synced from Catalyst QMS ' + new Date(p.synced).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '.' : ''); });
-  /* Pace: fiscal week n (7-day blocks from the fiscal month start) expects 25% x n of the QCs, up to 100%. Credit counts at most 2 of each type. */
-  const qmPace = (p) => { const [y, m, d] = p.start.split('-').map(Number); const n = new Date(); const t = new Date(n.getFullYear(), n.getMonth(), n.getDate());
-    const wk = Math.max(1, Math.floor(Math.round((t - new Date(y, m - 1, d)) / 864e5) / 7) + 1); return { wk, goal: Math.min(100, wk * 25) }; };
-  const qmTube = (pct, goal, thin) => { const tb = fbEl('div', 'sc-qm-tube' + (thin ? ' thin' : '')); tb.setAttribute('role', 'img');
-    tb.setAttribute('aria-label', Math.round(pct) + '% done, goal ' + goal + '% by now');
-    if (!thin) [25, 50, 75].forEach((v) => { const k = fbEl('i', 'tick'); k.style.left = v + '%'; tb.appendChild(k); });
+  /* Pace, prorated by fiscal day: by the end of day d of an N-day fiscal month, d/N of the QCs should be done. Credit counts at most 2 of each type. */
+  const qmPace = (p) => { const dt = (iso) => { const [y, m, d] = iso.split('-').map(Number); return new Date(y, m - 1, d); };
+    const n = new Date(), t = new Date(n.getFullYear(), n.getMonth(), n.getDate()), s0 = dt(p.start), total = Math.round((dt(p.end) - s0) / 864e5) + 1;
+    const day = Math.max(1, Math.min(total, Math.round((t - s0) / 864e5) + 1)); return { day, total, goal: Math.round(day / total * 100) }; };
+  const qmTube = (pct, goal, thin, ticks) => { const tb = fbEl('div', 'sc-qm-tube' + (thin ? ' thin' : '')); tb.setAttribute('role', 'img');
+    tb.setAttribute('aria-label', Math.round(pct) + '% done, goal ' + goal + '% by today');
+    if (!thin && ticks) ticks.forEach((v) => { const k = fbEl('i', 'tick'); k.style.left = v + '%'; tb.appendChild(k); });
     const liq = fbEl('div', 'liq'); tb.appendChild(liq);
     if (!thin) for (let i = 0; i < 6; i++) { const b = fbEl('i', 'bub'); b.style.left = (12 + i * 15) + '%'; b.style.animationDelay = (i * .55).toFixed(2) + 's'; b.style.width = b.style.height = (2 + (i % 3)) + 'px'; liq.appendChild(b); }
     const g = fbEl('i', 'goal'); g.style.left = goal + '%'; if (goal >= 100) g.style.display = 'none'; tb.appendChild(g);
@@ -2548,12 +2549,14 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     const ids = t.status === 'ok' ? t.data.map((r) => String(r.tech_id)) : [...new Set(q.data.map((r) => String(r.tech_id)))];
     const rows = q.data.filter((r) => r.date >= p.start && r.date <= p.end);
     const done = ids.reduce((a, id) => a + qmCredit({ ra: rows.filter((r) => String(r.tech_id) === id && r.qc_type === 'Ride Along').length, atf: rows.filter((r) => String(r.tech_id) === id && r.qc_type === 'After the Fact').length }), 0);
-    const total = ids.length * QM_NEED * 2, pct = total ? done / total * 100 : 0, { wk, goal } = qmPace(p), ok = pct >= goal;
+    const total = ids.length * QM_NEED * 2, pct = total ? done / total * 100 : 0, pace = qmPace(p), goal = pace.goal, ok = pct >= goal;
+    const wkEnds = [1, 2, 3, 4].map((w) => w * 7).filter((d) => d < pace.total).map((d) => d / pace.total * 100);
     el.style.setProperty('--qm-c', ok ? 'var(--color-ok)' : 'var(--color-bad)');
     const lab = fbEl('div', 'lab'), big = fbEl('div', 'big'); big.append(fbEl('b', null, Math.round(pct) + '%'), document.createTextNode(' '), fbEl('span', null, done + ' of ' + total + ' QCs done'));
-    const pace = fbEl('div', 'pace'); pace.append(fbEl('span', null, 'Fiscal week ' + wk + ' · goal ' + goal + '% by now'), fbEl('span', 'pill', ok ? 'On pace' : 'Behind pace'));
-    lab.append(big, pace); el.append(lab, qmTube(pct, goal, false));
-    const sc = fbEl('div', 'sc-qm-scale'); [[0, '0'], [25, 'Wk 1'], [50, 'Wk 2'], [75, 'Wk 3'], [100, 'Wk 4']].forEach(([v, txt]) => { const s2 = fbEl('span', v === goal ? 'now' : null, txt); s2.style.left = v + '%'; if (v === 0) s2.style.transform = 'none'; if (v === 100) s2.style.transform = 'translateX(-100%)'; sc.appendChild(s2); });
+    const pc = fbEl('div', 'pace'); pc.append(fbEl('span', null, 'Fiscal day ' + pace.day + ' of ' + pace.total + ' · goal ' + goal + '% by today'), fbEl('span', 'pill', ok ? 'On pace' : 'Behind pace'));
+    lab.append(big, pc); el.append(lab, qmTube(pct, goal, false, wkEnds));
+    const sc = fbEl('div', 'sc-qm-scale'); const lbl = (v, txt, cls) => { const s2 = fbEl('span', cls || null, txt); s2.style.left = v + '%'; if (v <= 3) s2.style.transform = 'none'; if (v >= 97) s2.style.transform = 'translateX(-100%)'; sc.appendChild(s2); };
+    lbl(0, fbmd(p.start)); wkEnds.forEach((v, i) => { if (Math.abs(v - goal) > 7) lbl(v, 'Wk ' + (i + 1) + ' end'); }); lbl(goal, 'Today ' + goal + '%', 'now'); if (100 - goal > 7) lbl(100, fbmd(p.end));
     el.appendChild(sc);
   });
   dash.draw('qmcards', (el) => {
@@ -3519,8 +3522,9 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   const RULES_HT = [
     /* Monthly QCs (Nov 10) */
     [/^(\d+) of (\d+) QCs done$/, (m) => `${m[1]} sou ${m[2]} QC fini`],
-    [/^Fiscal week (\d+) · goal (\d+)% by now$/, (m) => `Semèn fiskal ${m[1]} · objektif ${m[2]}% kounye a`],
-    [/^Wk (\d)$/, (m) => `Sem ${m[1]}`],
+    [/^Fiscal day (\d+) of (\d+) · goal (\d+)% by today$/, (m) => `Jou fiskal ${m[1]} sou ${m[2]} · objektif ${m[3]}% jodi a`],
+    [/^Wk (\d) end$/, (m) => `Fen sem ${m[1]}`],
+    [/^Today (\d+)%$/, (m) => `Jodi a ${m[1]}%`],
     [/^Needs (?:(\d) RA)?(?: \+ )?(?:(\d) ATF)?$/, (m) => 'Bezwen ' + [m[1] ? m[1] + ' akonp.' : '', m[2] ? m[2] + ' apre' : ''].filter(Boolean).join(' + ')],
     [/^(\d+) of (\d+)$/, (m) => `${m[1]} sou ${m[2]}`],
     [/^(\d+) of (\d+) \+ (\d+) extra$/, (m) => `${m[1]} sou ${m[2]} + ${m[3]} anplis`],
@@ -3650,8 +3654,9 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   const RULES = [
     /* Monthly QCs (Nov 10) */
     [/^(\d+) of (\d+) QCs done$/, (m) => `${m[1]} de ${m[2]} QC hechos`],
-    [/^Fiscal week (\d+) · goal (\d+)% by now$/, (m) => `Semana fiscal ${m[1]} · meta ${m[2]}% a esta fecha`],
-    [/^Wk (\d)$/, (m) => `Sem ${m[1]}`],
+    [/^Fiscal day (\d+) of (\d+) · goal (\d+)% by today$/, (m) => `Día fiscal ${m[1]} de ${m[2]} · meta ${m[3]}% para hoy`],
+    [/^Wk (\d) end$/, (m) => `Fin sem ${m[1]}`],
+    [/^Today (\d+)%$/, (m) => `Hoy ${m[1]}%`],
     [/^Needs (?:(\d) RA)?(?: \+ )?(?:(\d) ATF)?$/, (m) => 'Faltan ' + [m[1] ? m[1] + ' acomp.' : '', m[2] ? m[2] + ' después' : ''].filter(Boolean).join(' + ')],
     [/^(\d+) of (\d+)$/, (m) => `${m[1]} de ${m[2]}`],
     [/^(\d+) of (\d+) \+ (\d+) extra$/, (m) => `${m[1]} de ${m[2]} + ${m[3]} de más`],
