@@ -723,6 +723,42 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   .sc-rep-link b { color: var(--color-fg); }
   .sc-rep-dlg .note { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
   .sc-rep-count { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+  /* Orbs (preview, Nov 10): glass sphere, liquid filled toward the target, rolling surface and rising bubbles */
+  .sc-orbwrap { flex: none; line-height: 0; }
+  :root { --sc-orb-near: #e3b21f; }
+  .sc-big-row:has(.sc-orbwrap) { align-items: center; gap: 14px; }
+  .sc-orb { display: block; overflow: visible; }
+  .sc-orb .glass { fill: color-mix(in srgb, var(--color-fg) 9%, var(--color-bg)); }
+  .sc-orb .rim { fill: none; stroke: color-mix(in srgb, var(--color-fg) 22%, transparent); stroke-width: 1.2; }
+  .sc-orb .shine { fill: #fff; opacity: .22; }
+  .sc-orb .shine2 { fill: #fff; opacity: .1; }
+  .sc-orb .tl { stroke: var(--color-fg); stroke-width: 1; stroke-dasharray: 3 3; opacity: .55; }
+  .sc-orb .wv { animation: scOrbWave 3.4s linear infinite; }
+  .sc-orb .wv2 { animation: scOrbWave 5.6s linear infinite reverse; opacity: .55; }
+  .sc-orb .bb { fill: #fff; opacity: 0; animation: scOrbBub 4.2s ease-in infinite; }
+  @keyframes scOrbWave { from { transform: translateX(0); } to { transform: translateX(-100px); } }
+  @keyframes scOrbBub { 0% { transform: translateY(0); opacity: 0; } 20% { opacity: .55; } 100% { transform: translateY(-34px); opacity: 0; } }
+  .sc-tc-kpi.has-orb { grid-template-columns: auto minmax(0, 1fr); column-gap: 12px; align-items: center; }
+  .sc-tc-kpi.has-orb .sc-orbwrap { grid-row: 1 / span 3; }
+  @media (prefers-reduced-motion: reduce) { .sc-orb .wv, .sc-orb .wv2, .sc-flow .spark, .sc-flow .tw { animation: none !important; } .sc-orb .bb { display: none; } }
+  /* Ribbon flow (preview): where repeats come from */
+  .sc-flow-card { overflow: hidden; }
+  .sc-flow { display: block; width: 100%; height: auto; overflow: visible; }
+  .sc-flow .rib { opacity: .5; cursor: pointer; transition: opacity .2s; }
+  .sc-flow .rib:hover, .sc-flow .rib.on { opacity: .85; }
+  .sc-flow .spark { fill: none; stroke: #fff; stroke-linecap: round; stroke-dasharray: 0.1 11; opacity: .75; animation: scFlow 1.6s linear infinite; pointer-events: none; }
+  .sc-flow .spark.b { stroke-dasharray: 0.1 17; opacity: .45; animation-duration: 2.4s; }
+  :root[data-theme="light"] .sc-flow .spark { stroke: #fffbe8; }
+  .sc-flow .rib { mix-blend-mode: normal; }
+  @keyframes scFlow { to { stroke-dashoffset: -44; } }
+  .sc-flow .node { cursor: pointer; }
+  .sc-flow .node rect { rx: 3; }
+  .sc-flow text { fill: var(--color-fg); font-size: 12px; font-family: var(--font-anthropic-sans); }
+  .sc-flow text.n { fill: var(--color-fg-muted); font-size: 11px; }
+  .sc-flow text.hub { font-size: 13px; font-weight: 700; fill: #2a1a0a; }
+  .sc-flow .tw { fill: var(--color-fg); animation: scTw 2.6s ease-in-out infinite; }
+  @keyframes scTw { 0%, 100% { opacity: .1; } 50% { opacity: .8; } }
+  .sc-flow-legend { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
 </style>
 
 <div class="sc">
@@ -785,6 +821,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
         <h2>Tool usage</h2>
         <p class="sc-note">Share of eligible jobs where the tech ran the tool.</p>
         <div class="sc-big-row">
+          <div class="sc-orbwrap" data-draw="orb" data-kpi="tu" data-source="team_latest"></div>
           <div class="sc-big" data-draw="kpi" data-kpi="tu" data-source="team_latest" data-field="tu" data-row="0">—</div>
           <div class="sc-delta" data-draw="delta" data-kpi="tu" data-source="team_latest" data-field="d_tu" data-row="0">—</div>
         </div>
@@ -795,6 +832,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
         <h2>tNPS</h2>
         <p class="sc-note">Promoters minus detractors, as a share of all surveys.</p>
         <div class="sc-big-row">
+          <div class="sc-orbwrap" data-draw="orb" data-kpi="tnps" data-source="team_latest"></div>
           <div class="sc-big" data-draw="kpi" data-kpi="tnps" data-source="team_latest" data-field="tnps" data-row="0">—</div>
           <div class="sc-delta" data-draw="delta" data-kpi="tnps" data-source="team_latest" data-field="d_tnps" data-row="0">—</div>
         </div>
@@ -805,6 +843,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
         <h2>FTR</h2>
         <p class="sc-note">Share of jobs fixed the first time, with no repeat visit.</p>
         <div class="sc-big-row">
+          <div class="sc-orbwrap" data-draw="orb" data-kpi="ftr" data-source="team_latest"></div>
           <div class="sc-big" data-draw="kpi" data-kpi="ftr" data-source="team_latest" data-field="ftr" data-row="0">—</div>
           <div class="sc-delta" data-draw="delta" data-kpi="ftr" data-source="team_latest" data-field="d_ftr" data-row="0">—</div>
         </div>
@@ -1121,6 +1160,11 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
       <h3 class="small">Patterns worth a look</h3>
       <p class="sc-note">What stands out in each tech’s repeats. Select a tech to see only theirs.</p>
       <ul class="sc-rep-watch" data-draw="repwatch" data-source="repeats tech_table"></ul>
+    </article>
+    <article class="sc-card sc-flow-card">
+      <h3 class="small">Where repeats come from</h3>
+      <p class="sc-note">Each ribbon is a group of repeats: from the job type of our visit to the fix code the next tech closed it with. Thicker means more repeats. Select a job type to filter the page to it.</p>
+      <div data-draw="repflow2" data-source="repeats"></div>
     </article>
     <div class="sc-grid">
       <article class="sc-card">
@@ -1616,6 +1660,31 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     const io = new IntersectionObserver((ents) => { if (ents.some((x) => x.isIntersecting)) { io.disconnect(); go(); } }, { threshold: 0.6 });
     io.observe(el);
   };
+  /* Glass orb (preview): value fills toward 100, with the bottom at 12 points under target, so the target line sits partway up. */
+  SC.orbN = 0;
+  SC.orb = (v, T, size) => {
+    const NS = 'http://www.w3.org/2000/svg', mk = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+    const id = 'orb' + (++SC.orbN), ok = v != null && v >= T, lo = Math.max(0, T - 12);
+    const fr = v == null ? 0 : Math.max(0.05, Math.min(1, (v - lo) / (100 - lo))), tf = (T - lo) / (100 - lo);
+    const y = 92 - fr * 84, ty = 92 - tf * 84, near = !ok && v != null && T - v <= 1, col = ok ? 'var(--color-ok)' : near ? 'var(--sc-orb-near)' : 'var(--color-bad)';
+    const s = mk('svg', { viewBox: '0 0 100 100', width: size, height: size, class: 'sc-orb', role: 'img', 'aria-hidden': 'true' });
+    const d = mk('defs', {}); const cp = mk('clipPath', { id: id + 'c' }); cp.appendChild(mk('circle', { cx: 50, cy: 50, r: 44 })); d.appendChild(cp);
+    const lg = mk('linearGradient', { id: id + 'g', x1: 0, y1: 0, x2: 0, y2: 1 }); lg.append(mk('stop', { offset: 0, 'stop-color': col, 'stop-opacity': .95 }), mk('stop', { offset: 1, 'stop-color': col, 'stop-opacity': .72 })); d.appendChild(lg);
+    const rg = mk('radialGradient', { id: id + 'r', cx: .35, cy: .3, r: .8 }); rg.append(mk('stop', { offset: 0, 'stop-color': '#fff', 'stop-opacity': .12 }), mk('stop', { offset: .6, 'stop-color': '#fff', 'stop-opacity': 0 }), mk('stop', { offset: 1, 'stop-color': '#000', 'stop-opacity': .14 })); d.appendChild(rg);
+    s.appendChild(d); s.appendChild(mk('circle', { cx: 50, cy: 50, r: 44, class: 'glass' }));
+    const g = mk('g', { 'clip-path': 'url(#' + id + 'c)' });
+    const wave = (yy, amp, cls) => { let p = 'M0 ' + yy; for (let x = 0; x < 200; x += 50) p += ' Q' + (x + 12.5) + ' ' + (yy - amp) + ' ' + (x + 25) + ' ' + yy + ' T' + (x + 50) + ' ' + yy; p += ' V100 H0 Z'; const w = mk('path', { d: p, fill: 'url(#' + id + 'g)', class: cls }); return w; };
+    g.append(wave(y + 1.5, 2.6, 'wv2'), wave(y, 3.2, 'wv'));
+    if (v != null) [[30, 1.6, 0], [52, 1.2, 1.4], [66, 1.8, 2.6], [42, 1, 3.3]].forEach(([x, r, dl]) => { if (y < 84) { const b = mk('circle', { cx: x, cy: 88, r, class: 'bb' }); b.style.animationDelay = dl + 's'; g.appendChild(b); } });
+    s.appendChild(g);
+    { const tg = mk('g', { 'clip-path': 'url(#' + id + 'c)' }); tg.appendChild(mk('line', { x1: 4, x2: 96, y1: ty, y2: ty, class: 'tl' })); s.appendChild(tg); }
+    s.appendChild(mk('circle', { cx: 50, cy: 50, r: 44, fill: 'url(#' + id + 'r)' }));
+    s.appendChild(mk('ellipse', { cx: 36, cy: 26, rx: 15, ry: 8, transform: 'rotate(-28 36 26)', class: 'shine' }));
+    s.appendChild(mk('ellipse', { cx: 64, cy: 82, rx: 14, ry: 3.5, class: 'shine2' }));
+    s.appendChild(mk('circle', { cx: 50, cy: 50, r: 44, class: 'rim' }));
+    const w = document.createElement('div'); w.className = 'sc-orbwrap'; w.title = v == null ? '' : 'Filled to ' + SC.pct(v) + '; the dashed line is the ' + SC.tgt(T) + ' target'; w.appendChild(s); return w;
+  };
+  dash.draw('orb', (el) => { el.replaceChildren(); const r = latest(); const k = el.dataset.kpi; if (!r) return; el.appendChild(SC.orb(r[k], SC.T[k], +(el.dataset.size || 92)).firstChild); });
   dash.draw('kpi', (el) => { const r = latest(); el.textContent = r ? SC.pct(r[el.dataset.kpi]) : '—'; });
   dash.draw('delta', (el) => {
     const r = latest(); const k = el.dataset.kpi;
@@ -2453,7 +2522,10 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     el.appendChild(head);
     /* What they need this month */
     const kp = fbEl('div', 'sc-tc-kpis');
-    const kpi = (k, v, cls, need) => { const d = fbEl('div', 'sc-tc-kpi ' + cls); d.append(fbEl('span', 'k', k), fbEl('span', 'v', v), fbEl('span', 'need', need)); kp.appendChild(d); };
+    const kpi = (k, v, cls, need) => { const d = fbEl('div', 'sc-tc-kpi ' + cls);
+      const key = /^FTR/.test(k) ? 'ftr' : /^tNPS/.test(k) ? 'tnps' : /^Tool usage/.test(k) ? 'tu' : null;
+      if (key && !r.away && !(key === 'tnps' && !r.tnps_surveys)) { d.classList.add('has-orb'); d.appendChild(SC.orb(r[key], SC.T[key], 64)); }
+      d.append(fbEl('span', 'k', k), fbEl('span', 'v', v), fbEl('span', 'need', need)); kp.appendChild(d); };
     if (r.away) { kpi('This month', '—', 'dim', 'No jobs this fiscal month. Numbers below are from ' + r.last_label + '.'); }
     else {
       kpi('FTR · target ' + SC.tgt(SC.T.ftr), SC.pct(r.ftr), r.ftr_miss ? 'miss' : '', r.ftr_needed > 0 ? r.ftr_needed + ' first-time fixes in a row, no repeats, to reach ' + SC.tgt(SC.T.ftr) + '.' + (r.ftr_fails != null ? ' ' + r.ftr_fails + (r.ftr_fails === 1 ? ' FTR fail' : ' FTR fails') + ' so far.' : '') : 'On target' + (r.ftr_fails != null ? ' · ' + r.ftr_fails + (r.ftr_fails === 1 ? ' fail' : ' fails') + ' on ' + r.ftr_jobs + ' jobs.' : '.'));
@@ -2647,7 +2719,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     return [...new Set([...ids, ...rs.map((r) => r.tech)])]; };
   const repFilter = (rs, skip) => rs.filter((r) => (SC.rep.fm === 'all' || r.fm === SC.rep.fm) && (SC.rep.type === 'all' || String(repKind(r.type)) === SC.rep.type)
     && (skip === 'tech' || !SC.rep.tech || r.tech === SC.rep.tech) && (skip === 'job' || SC.rep.job === 'all' || r.job === SC.rep.job));
-  const repRedraw = () => ['repfilters', 'repsum', 'repwatch', 'repbars', 'repdays', 'reppairs', 'repflow', 'repmonths', 'repcount', 'replist'].forEach((n) => dash.draw(n));
+  const repRedraw = () => ['repfilters', 'repsum', 'repflow2', 'repwatch', 'repbars', 'repdays', 'reppairs', 'repflow', 'repmonths', 'repcount', 'replist'].forEach((n) => dash.draw(n));
   dash.draw('repnote', (el) => { const rs = repRows(); if (!rs) { el.textContent = ''; return; }
     const ms = repMonths(rs); el.textContent = (ms.length > 1 ? 'Fiscal months ' : 'Fiscal month ') + ms.join(' and ') + ', repeats through ' + fbmd(rs.reduce((a, r) => r.d2 > a ? r.d2 : a, '')) + '.'; });
   dash.draw('repfilters', (el) => {
@@ -2698,6 +2770,65 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   });
   dash.draw('repdays', (el) => { const all = repRows(); if (!all) { el.replaceChildren(); return; } repDays(el, repFilter(all)); });
   dash.draw('reppairs', (el) => { const all = repRows(); if (!all) { el.replaceChildren(); return; } repPairs(el, repFilter(all), 8); });
+  /* Ribbon flow (preview, Nov 10): repeats -> job type of our visit -> next tech's fix code. Sparkles stream along each ribbon. */
+  dash.draw('repflow2', (el) => {
+    el.replaceChildren(); const all = repRows(); if (!all) return; const rs = repFilter(all), n = rs.length;
+    if (!n) { el.appendChild(fbEl('p', 'sc-tc-empty', 'No repeats with these filters.')); return; }
+    const NS = 'http://www.w3.org/2000/svg', mk = (t, a, txt) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (txt != null) e.textContent = txt; return e; };
+    const W = Math.max(300, el.clientWidth || 800), phone = W < 640;
+    const top = (f, m) => { const t = repTop(rs, f, 99); const keep = t.slice(0, m), rest = t.slice(m).reduce((a, x) => a + x[1], 0); if (rest) keep.push(['Other', rest]); return keep; };
+    const jobs = top((r) => r.job, phone ? 5 : 6), jobOf = (r) => jobs.some(([k]) => k === r.job) ? r.job : 'Other';
+    const fixes = top((r) => r.fix2, 6), fixOf = (r) => fixes.some(([k]) => k === r.fix2) ? r.fix2 : 'Other';
+    const pal = ['var(--sc-c2)', 'var(--sc-c1)', 'var(--sc-c4)', 'var(--sc-c3)', 'var(--sc-c5)', '#d4a72c', 'var(--sc-c6)'];
+    const colOf = (j) => j === 'Other' ? 'var(--sc-c6)' : pal[jobs.findIndex(([k]) => k === j) % pal.length];
+    const H = phone ? Math.max(260, jobs.length * 62) : 360, pad = 16, gap = 10;
+    const hubX = phone ? 40 : 110, jobX = phone ? 112 : Math.round(W * 0.42), fixX = W - 210, nodeW = 10;
+    const scale = (cnt) => (H - 2 * pad - gap * (cnt - 1)) / n;
+    const k1 = scale(jobs.length), k2 = phone ? k1 : scale(fixes.length), k = Math.min(k1, k2), hubSpan = Math.min(n * k, phone ? 34 : 50), hk = hubSpan / n;
+    const s = mk('svg', { viewBox: '0 0 ' + W + ' ' + H, class: 'sc-flow', role: 'img', 'aria-label': 'Repeats by job type and next fix' });
+    /* hub glow and twinkles */
+    const d = mk('defs', {}); const rg = mk('radialGradient', { id: 'hubg' }); rg.append(mk('stop', { offset: 0, 'stop-color': '#fff', 'stop-opacity': .95 }), mk('stop', { offset: .18, 'stop-color': '#ffd9a8', 'stop-opacity': .55 }), mk('stop', { offset: 1, 'stop-color': '#ffb070', 'stop-opacity': 0 })); d.appendChild(rg); s.appendChild(d);
+    const cy = H / 2; let seed = 7; const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+    s.appendChild(mk('circle', { cx: hubX, cy, r: phone ? 36 : 70, fill: 'none', stroke: 'var(--color-border-line)', 'stroke-dasharray': '2 5' }));
+    for (let i = 0; i < (phone ? 26 : 48); i++) { const a = rnd() * 6.283, rr = 8 + rnd() * (phone ? 32 : 64); const t = mk('circle', { cx: hubX + Math.cos(a) * rr, cy: cy + Math.sin(a) * rr, r: .6 + rnd() * 1.4, class: 'tw' }); t.style.animationDelay = (rnd() * 2.6).toFixed(2) + 's'; s.appendChild(t); }
+    s.appendChild(mk('circle', { cx: hubX, cy, r: phone ? 30 : 50, fill: 'url(#hubg)' })); s.appendChild(mk('circle', { cx: hubX, cy, r: phone ? 15 : 19, fill: '#fff', opacity: .92 }));
+    const band = (x0, a0, b0, x1, a1, b1, col, cls, onClick, title) => {
+      const xm = (x0 + x1) / 2, g = mk('g', {});
+      const pth = mk('path', { d: `M${x0},${a0} C${xm},${a0} ${xm},${a1} ${x1},${a1} L${x1},${b1} C${xm},${b1} ${xm},${b0} ${x0},${b0} Z`, fill: col, class: 'rib' + (cls ? ' ' + cls : '') });
+      if (title) pth.appendChild(mk('title', {}, title)); if (onClick) pth.addEventListener('click', onClick); g.appendChild(pth);
+      const t0 = Math.abs(b0 - a0), t1 = Math.abs(b1 - a1), lines = Math.max(1, Math.min(5, Math.round(Math.max(t0, t1) / 7)));
+      for (let q = 1; q <= lines; q++) { const f = q / (lines + 1), c0 = a0 + (b0 - a0) * f, c1 = a1 + (b1 - a1) * f;
+        const sp = mk('path', { d: `M${x0},${c0} C${xm},${c0} ${xm},${c1} ${x1},${c1}`, class: 'spark' + (q % 2 ? '' : ' b'), 'stroke-width': 1.8 }); sp.style.animationDelay = (-q * .37).toFixed(2) + 's'; g.appendChild(sp); }
+      s.appendChild(g); };
+    const pick = (j) => () => { SC.rep.job = SC.rep.job === j || j === 'Other' ? 'all' : j; repRedraw(); };
+    /* job nodes */
+    let y = pad + ((H - 2 * pad) - (n * k + gap * (jobs.length - 1))) / 2, hy = cy - hubSpan / 2; const jy = {};
+    jobs.forEach(([j, c]) => { const h = c * k, hh = c * hk; jy[j] = { y, h, inY: y, outY: y };
+      band(hubX + (phone ? 16 : 26), hy, hy + hh, jobX, y, y + h, colOf(j), SC.rep.job === j ? 'on' : '', pick(j), j + ': ' + c + (c === 1 ? ' repeat' : ' repeats')); hy += hh; y += phone ? Math.max(h + gap, 38) : h + gap; });
+    /* fix nodes and job -> fix ribbons */
+    if (!phone) {
+      let fy = pad + ((H - 2 * pad) - (n * k + gap * (fixes.length - 1))) / 2; const fyy = {};
+      fixes.forEach(([f, c]) => { fyy[f] = { y: fy, h: c * k, cur: fy }; fy += c * k + gap; });
+      jobs.forEach(([j]) => { const mine = rs.filter((r) => jobOf(r) === j);
+        fixes.forEach(([f]) => { const c = mine.filter((r) => fixOf(r) === f).length; if (!c) return; const h = c * k, J = jy[j], F = fyy[f];
+          band(jobX + nodeW, J.outY, J.outY + h, fixX, F.cur, F.cur + h, colOf(j), '', pick(j), j + ' → ' + f + ': ' + c); J.outY += h; F.cur += h; }); });
+      fixes.forEach(([f, c]) => { const F = fyy[f], g = mk('g', { class: 'node' }); g.append(mk('rect', { x: fixX, y: F.y, width: nodeW, height: Math.max(2, F.h), fill: 'var(--color-fg-muted)' }));
+        const t1 = mk('text', { x: fixX + nodeW + 8, y: F.y + F.h / 2 + 4 }); const ts = mk('tspan', {}, f); if (f !== 'Other') ts.setAttribute('data-no-tr', '1'); t1.append(ts, mk('tspan', { dx: 6, fill: 'var(--color-fg-muted)', 'font-size': 11 }, String(c)));
+        g.append(t1); s.appendChild(g); });
+      s.appendChild(mk('text', { x: fixX, y: 11, class: 'n' }, 'Next tech’s fix'));
+    }
+    jobs.forEach(([j, c]) => { const J = jy[j], g = mk('g', { class: 'node' }); g.addEventListener('click', pick(j));
+      g.append(mk('rect', { x: jobX, y: J.y, width: nodeW, height: Math.max(2, J.h), fill: colOf(j) }));
+      const lx = jobX + nodeW + 8, ly = J.y + (phone ? 14 : J.h / 2 + 4);
+      const t = mk('text', { x: lx, y: ly, 'paint-order': 'stroke', stroke: 'var(--color-panel)', 'stroke-width': 4, 'font-weight': 600 }); const ts = mk('tspan', {}, j); if (j !== 'Other') ts.setAttribute('data-no-tr', '1'); t.append(ts, mk('tspan', { dx: 6, class: 'n', fill: 'var(--color-fg-muted)', 'font-weight': 400 }, String(c))); g.appendChild(t);
+      if (phone) { const [ff, fc] = repTop(rs.filter((r) => jobOf(r) === j), (r) => r.fix2, 1)[0] || ['—', 0]; const t2 = mk('text', { x: lx, y: ly + 15, class: 'n' }); const a2 = mk('tspan', {}, '→ '), b2 = mk('tspan', {}, ff + ' ×' + fc); b2.setAttribute('data-no-tr', '1'); t2.append(a2, b2); g.appendChild(t2); }
+      s.appendChild(g); });
+    s.appendChild(mk('text', { x: jobX, y: 11, class: 'n' }, 'Job type of our visit'));
+    s.appendChild(mk('text', { x: hubX, y: cy + 4, 'text-anchor': 'middle', class: 'hub', fill: '#2a1a0a' }, String(n)));
+    s.appendChild(mk('text', { x: hubX, y: cy + (phone ? 52 : 80), 'text-anchor': 'middle', class: 'n' }, n === 1 ? 'repeat' : 'repeats'));
+    el.appendChild(s);
+    if (phone) el.appendChild(fbEl('p', 'sc-flow-legend', 'Under each job type: the next tech’s most common fix code.'));
+  });
   dash.draw('repflow', (el) => {
     el.replaceChildren(); const all = repRows(); if (!all) return; const rs = repFilter(all);
     const jobs = repTop(rs, (r) => r.job, 5); if (!jobs.length) { el.appendChild(fbEl('div', 'sc-tc-empty', 'No repeats with these filters.')); return; }
@@ -3023,6 +3154,8 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     'Another tech': 'Otro técnico', 'Last known visit': 'Última visita conocida', 'Not in this report': 'No está en este reporte', 'Visit': 'Visita', 'Job type': 'Tipo de trabajo', 'Called in for': 'Llamó por', 'Closed with': 'Cerrado con',
     'This tech isn’t on Dillon’s or Jim’s team, or their visit didn’t come back within 30 days, so the report doesn’t name them.': 'Este técnico no está en el equipo de Dillon ni en el de Jim, o su visita no volvió en 30 días, por eso el reporte no lo nombra.',
     'This tech isn’t named in the report: they aren’t on Dillon’s or Jim’s team, or their visit doesn’t count for FTR.': 'El reporte no nombra a este técnico: no está en el equipo de Dillon ni en el de Jim, o su visita no cuenta para el FTR.',
+    'Where repeats come from': 'De dónde vienen las repeticiones', 'Each ribbon is a group of repeats: from the job type of our visit to the fix code the next tech closed it with. Thicker means more repeats. Select a job type to filter the page to it.': 'Cada cinta es un grupo de repeticiones: del tipo de trabajo de nuestra visita al código con que lo cerró el siguiente técnico. Más gruesa significa más repeticiones. Selecciona un tipo de trabajo para filtrar la página.',
+    'Job type of our visit': 'Tipo de trabajo de nuestra visita', 'repeat': 'repetición', 'repeats': 'repeticiones', 'Under each job type: the next tech’s most common fix code.': 'Debajo de cada tipo de trabajo: el código más común del siguiente técnico.',
     'Account history': 'Historial de la cuenta', 'Repeat visit': 'Visita de repetición', 'Repeats on both Dillon’s and Jim’s teams’ jobs are listed. Who ran a repeat visit is only known when that visit was one of those jobs and came back too.': 'Se muestran las repeticiones en trabajos de los equipos de Dillon y de Jim. Quién hizo una visita de repetición solo se sabe cuando esa visita fue uno de esos trabajos y también volvió.', 'Jim’s team': 'Equipo de Jim', 'Dillon’s team': 'Equipo de Dillon',
     'Account': 'Cuenta', '🔒 Show account numbers': '🔒 Mostrar números de cuenta', '🔓 Account numbers shown': '🔓 Números de cuenta visibles', 'Hide account numbers': 'Ocultar números de cuenta',
     'Passcode': 'Código', 'Unlock': 'Desbloquear', 'Checking…': 'Verificando…', 'Wrong passcode': 'Código incorrecto',
@@ -3148,6 +3281,8 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     'Another tech': 'Yon lòt teknisyen', 'Last known visit': 'Dènye vizit nou konnen', 'Not in this report': 'Pa nan rapò sa a', 'Visit': 'Vizit', 'Job type': 'Kalite travay', 'Called in for': 'Rele pou', 'Closed with': 'Fèmen ak',
     'This tech isn’t on Dillon’s or Jim’s team, or their visit didn’t come back within 30 days, so the report doesn’t name them.': 'Teknisyen sa a pa nan ekip Dillon oswa ekip Jim, oswa vizit li pa t tounen nan 30 jou, se poutèt sa rapò a pa nonmen li.',
     'This tech isn’t named in the report: they aren’t on Dillon’s or Jim’s team, or their visit doesn’t count for FTR.': 'Rapò a pa nonmen teknisyen sa a: li pa nan ekip Dillon oswa ekip Jim, oswa vizit li pa konte pou FTR.',
+    'Where repeats come from': 'Kote repetisyon yo soti', 'Each ribbon is a group of repeats: from the job type of our visit to the fix code the next tech closed it with. Thicker means more repeats. Select a job type to filter the page to it.': 'Chak riban se yon gwoup repetisyon: soti nan kalite travay vizit nou an rive nan kòd lòt teknisyen an te fèmen l ak li. Pi epè vle di plis repetisyon. Chwazi yon kalite travay pou filtre paj la.',
+    'Job type of our visit': 'Kalite travay vizit nou an', 'repeat': 'repetisyon', 'repeats': 'repetisyon', 'Under each job type: the next tech’s most common fix code.': 'Anba chak kalite travay: kòd lòt teknisyen an itilize pi souvan an.',
     'Account history': 'Istwa kont lan', 'Repeat visit': 'Vizit repetisyon', 'Repeats on both Dillon’s and Jim’s teams’ jobs are listed. Who ran a repeat visit is only known when that visit was one of those jobs and came back too.': 'Repetisyon sou travay ekip Dillon ak ekip Jim parèt isit la. Nou konnen kiyès ki te fè yon vizit repetisyon sèlman lè vizit sa a te youn nan travay sa yo epi li te tounen tou.', 'Jim’s team': 'Ekip Jim', 'Dillon’s team': 'Ekip Dillon',
     'Account': 'Kont', '🔒 Show account numbers': '🔒 Montre nimewo kont yo', '🔓 Account numbers shown': '🔓 Nimewo kont yo parèt', 'Hide account numbers': 'Kache nimewo kont yo',
     'Passcode': 'Kòd', 'Unlock': 'Debloke', 'Checking…': 'N ap verifye…', 'Wrong passcode': 'Kòd la pa bon',
@@ -3360,6 +3495,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     [/^(\d+) accounts? came back more than once:$/, (m) => `${m[1]} kont tounen plis pase yon fwa:`],
     [/^This account came back (\d+) times$/, (m) => `Kont sa a tounen ${m[1]} fwa`],
     [/^Visit (\d+)$/, (m) => `Vizit ${m[1]}`],
+    [/^Filled to ([\d.]+%); the dashed line is the ([\d.]+%) target$/, (m) => `Plen rive ${m[1]}; liy pwentiye a se objektif ${m[2]} an`],
     [/^([A-Z][a-z]{2}) (\d{1,2}) · (\d+) days? after visit (\d+)$/, (m) => `${m[2]} ${moh(m[1])} · ${m[3]} jou apre vizit ${m[4]}`],
     [/^([A-Z][a-z]{2}) (\d{1,2}) · (\d+) days? later$/, (m) => `${m[2]} ${moh(m[1])} · ${m[3]} jou apre`],
     [/^The repeat on ([A-Z][a-z]{2}) (\d{1,2}) was Tech (\w+)’s job, shown next\.$/, (m) => `Repetisyon ${m[2]} ${moh(m[1])} an se te yon travay teknisyen ${m[3]}, ki parèt anba a.`],
@@ -3484,6 +3620,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     [/^(\d+) accounts? came back more than once:$/, (m) => `${m[1]} ${m[1] === '1' ? 'cuenta volvió' : 'cuentas volvieron'} más de una vez:`],
     [/^This account came back (\d+) times$/, (m) => `Esta cuenta volvió ${m[1]} veces`],
     [/^Visit (\d+)$/, (m) => `Visita ${m[1]}`],
+    [/^Filled to ([\d.]+%); the dashed line is the ([\d.]+%) target$/, (m) => `Lleno hasta ${m[1]}; la línea punteada es la meta de ${m[2]}`],
     [/^([A-Z][a-z]{2}) (\d{1,2}) · (\d+) days? after visit (\d+)$/, (m) => `${m[2]} ${mo(m[1])} · ${m[3]} ${m[3] === '1' ? 'día' : 'días'} después de la visita ${m[4]}`],
     [/^([A-Z][a-z]{2}) (\d{1,2}) · (\d+) days? later$/, (m) => `${m[2]} ${mo(m[1])} · ${m[3]} ${m[3] === '1' ? 'día' : 'días'} después`],
     [/^The repeat on ([A-Z][a-z]{2}) (\d{1,2}) was Tech (\w+)’s job, shown next\.$/, (m) => `La repetición del ${m[2]} ${mo(m[1])} fue un trabajo del técnico ${m[3]}, que se muestra a continuación.`],
