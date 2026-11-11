@@ -787,6 +787,8 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   .sc-qm-tube .bub { position: absolute; bottom: 2px; width: 4px; height: 4px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #fff, color-mix(in srgb, #fff 40%, transparent)); opacity: 0; animation: scQmBub 3.4s ease-in infinite; }
   .sc-qm-tube .tick { position: absolute; top: 0; bottom: 0; width: 1px; background: color-mix(in srgb, var(--color-fg) 22%, transparent); }
   .sc-qm-tube .goal { position: absolute; top: -1px; bottom: -1px; width: 0; border-left: 2px dashed var(--color-fg); opacity: .7; z-index: 2; }
+  .sc-qm-vial { display: block; width: 100%; height: 92px; touch-action: pan-y; cursor: pointer; margin-top: -4px; }
+  .sc-qm-scale.vial { margin: -16px 13.5px 0; }
   .sc-qm-scale { position: relative; height: 14px; font-size: 10.5px; color: var(--color-fg-muted); font-variant-numeric: tabular-nums; }
   .sc-qm-scale span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
   .sc-qm-scale span.now { color: var(--color-fg); font-weight: 600; }
@@ -2572,7 +2574,120 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     if (still) set(); else requestAnimationFrame(() => requestAnimationFrame(set));
     return tb; };
   const qmCredit = (r) => Math.min(QM_NEED, r.ra) + Math.min(QM_NEED, r.atf);
+  /* Glass vial for the Monthly QCs team bar (Dillon, Nov 11): canvas drawing with a simple wave simulation, so the liquid
+     pours in, sloshes, ripples, bubbles, and reacts to pointer moves, taps and page scrolls. Still image with reduced motion.
+     qmVial(pct, goal, ticks) returns { el, stop }; stop() ends the animation when the drawing is redone. */
+  const qmVial = (pct, goal, TICKS) => {
+    const cv = document.createElement('canvas'), ctx = cv.getContext('2d'); cv.className = 'sc-qm-vial'; cv.setAttribute('role', 'img');
+    cv.setAttribute('aria-label', Math.round(pct) + '% done, goal ' + goal + '% by today');
+    const GOAL = goal, still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const N = 110, h = new Float32Array(N), v = new Float32Array(N);
+    let W = 0, H = 92, dpr = 1, front = 0, vf = 0, tilt = 0, vt = 0, col = {}, T = 0, nextDrip = 1, visible = true, alive = true, raf = 0;
+    const G = { padX: 10, ty: 14, TH: 42, wall: 3.5 };
+    const geo = () => { const ix = G.padX + G.wall, iy = G.ty + G.wall, iw = W - 2 * G.padX - 2 * G.wall, ih = G.TH - 2 * G.wall; return { ix, iy, iw, ih }; };
+    const rgb = (x) => { const m = String(x).trim().match(/^rgba?\(([^)]+)\)/); if (m) return m[1].split(',').slice(0, 3).map((n) => parseFloat(n));
+      x = String(x).trim().replace('#', ''); if (x.length === 3) x = [...x].map((c) => c + c).join(''); const n = parseInt(x, 16); return isNaN(n) ? [128, 128, 128] : [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+    const mix = (a, b, t, al = 1) => { const A = rgb(a), B = rgb(b); return 'rgba(' + A.map((x, i) => Math.round(x + (B[i] - x) * t)).join(',') + ',' + al + ')'; };
+    const probe = document.createElement('span');
+    const resolve = (v2) => { probe.style.color = v2; document.body.appendChild(probe); const c = getComputedStyle(probe).color; probe.remove(); return c; };
+    const readColors = () => { col = { ok: resolve('var(--color-ok)'), bad: resolve('var(--color-bad)'), fg: resolve('var(--color-fg)'), bg: resolve('var(--color-bg)'), panel: resolve('var(--color-panel)') };
+      const b = rgb(col.bg); col.dark = (b[0] * 299 + b[1] * 587 + b[2] * 114) / 1000 < 128; };
+    const capsule = (x, y, w, hh) => { const r = hh / 2, q = new Path2D(); q.moveTo(x + r, y); q.lineTo(x + w - r, y); q.arc(x + w - r, y + r, r, -Math.PI / 2, Math.PI / 2); q.lineTo(x + r, y + hh); q.arc(x + r, y + r, r, Math.PI / 2, Math.PI * 1.5); q.closePath(); return q; };
+    const targetX = () => { const { ix, iw } = geo(); return ix + iw * Math.max(0, Math.min(100, pct)) / 100; };
+    const bubbles = Array.from({ length: 16 }, () => ({ x: Math.random(), y: Math.random(), r: 1 + Math.random() * 2.2, s: .12 + Math.random() * .22, ph: Math.random() * 6.28 }));
+    const step = (dt) => {
+      const { ix, iw } = geo(), tx = targetX();
+      vf += (-70 * (front - tx) - 7.5 * vf) * dt; front += vf * dt;
+      vt += (-34 * tilt - 2.6 * vt) * dt; tilt += vt * dt; tilt = Math.max(-.16, Math.min(.16, tilt));
+      const na = Math.max(2, Math.min(N, Math.round((front - ix) / iw * (N - 1)) + 1));
+      for (let i = 0; i < na; i++) { const l = h[i > 0 ? i - 1 : i], r = h[i < na - 1 ? i + 1 : i]; v[i] += (-7 * h[i] - 1.1 * v[i] + 520 * (l + r - 2 * h[i])) * dt; }
+      v[na - 1] += vf * 1.2 * dt; vt -= vf * .00035 * dt * 60;
+      for (let i = 0; i < na; i++) { h[i] += v[i] * dt; if (h[i] > 9) { h[i] = 9; v[i] *= -.3; } if (h[i] < -8) { h[i] = -8; v[i] *= -.3; } }
+      for (let i = na; i < N; i++) { h[i] = 0; v[i] = 0; }
+      for (const b of bubbles) { b.y += b.s * dt; b.ph += dt * 2; if (b.y > 1) { const k = Math.min(na - 1, Math.max(0, Math.round(b.x * (na - 1)))); v[k] -= 14 + b.r * 6; b.y = 0; b.x = Math.random(); b.r = 1 + Math.random() * 2.2; b.s = .12 + Math.random() * .22; } }
+      nextDrip -= dt; if (nextDrip <= 0) { nextDrip = .7 + Math.random() * 1.6; const k = Math.floor(Math.random() * na); const a = (Math.random() < .5 ? -1 : 1) * (18 + Math.random() * 26); for (let j = -2; j <= 2; j++) if (k + j >= 0 && k + j < na) v[k + j] += a * (1 - Math.abs(j) / 3); vt += (Math.random() - .5) * .02; }
+    };
+    const draw = () => {
+      if (!W) return;
+      const { ix, iy, iw, ih } = geo(), { padX, ty, TH } = G, ow = W - 2 * padX;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+      const C = pct >= GOAL ? col.ok : col.bad, dark = col.dark, full = pct >= 99.5;
+      const fx = full ? ix + iw + ih : Math.max(ix, Math.min(ix + iw, front));
+      const outer = capsule(padX, ty, ow, TH), inner = capsule(ix, iy, iw, ih);
+      ctx.save(); ctx.shadowColor = 'rgba(0,0,0,' + (dark ? .6 : .3) + ')'; ctx.shadowBlur = 16; ctx.shadowOffsetY = 10; ctx.fillStyle = col.panel; ctx.fill(outer); ctx.restore();
+      if (fx - ix > 10) { ctx.save(); ctx.shadowColor = mix(C, '#ffffff', .15, dark ? .75 : .6); ctx.shadowBlur = 16; ctx.shadowOffsetY = 13; ctx.fillStyle = col.panel;
+        ctx.fill(capsule(ix + 6, ty + TH - 14, Math.min(fx, ix + iw) - ix - 8, 10)); ctx.restore(); }
+      const gb = ctx.createLinearGradient(0, ty, 0, ty + TH);
+      if (dark) { gb.addColorStop(0, 'rgba(255,255,255,.16)'); gb.addColorStop(.45, 'rgba(255,255,255,.04)'); gb.addColorStop(1, 'rgba(255,255,255,.11)'); }
+      else { gb.addColorStop(0, 'rgba(255,255,255,.85)'); gb.addColorStop(.45, 'rgba(255,255,255,.35)'); gb.addColorStop(1, 'rgba(255,255,255,.6)'); }
+      ctx.fillStyle = col.panel; ctx.fill(outer); ctx.fillStyle = gb; ctx.fill(outer);
+      ctx.fillStyle = dark ? 'rgba(4,6,10,.55)' : 'rgba(70,82,104,.22)'; ctx.fill(inner);
+      const na = Math.max(2, Math.min(N, Math.round((fx - ix) / iw * (N - 1)) + 1));
+      const base = iy + ih * .27, mid = (ix + Math.min(fx, ix + iw)) / 2;
+      const sy = (x, i) => Math.max(iy + 1.5, Math.min(iy + ih * .72, base + h[Math.min(N - 1, i)] + tilt * (x - mid) + Math.sin(x * .045 + T * 2.1) * .7 + Math.sin(x * .11 - T * 3.3) * .35));
+      const top = []; for (let i = 0; i < na; i++) { const x = Math.min(fx, ix + iw * i / (N - 1)); top.push([x, sy(x, i)]); }
+      if (top[top.length - 1][0] < fx) top.push([fx, sy(fx, na - 1)]);
+      const lastY = top[top.length - 1][1], bulge = Math.max(3, Math.min(13, 8 + vf * .03)), frontPts = [];
+      if (!full) for (let k = 1; k <= 14; k++) { const t = k / 14, y = lastY + (iy + ih - lastY) * t; frontPts.push([fx + bulge * Math.pow(Math.sin(Math.PI * t), .8) + Math.sin(T * 3.1 + t * 5) * 1.1 * (1 - Math.abs(t - .5)), y]); }
+      const liq = new Path2D(); liq.moveTo(ix - 4, iy + ih + 4); liq.lineTo(ix - 4, top[0][1]); for (const q of top) liq.lineTo(q[0], q[1]); for (const q of frontPts) liq.lineTo(q[0], q[1]); liq.lineTo(fx, iy + ih + 4); liq.closePath();
+      if (pct > .3) {
+        ctx.save(); ctx.clip(inner);
+        const lg = ctx.createLinearGradient(0, iy, 0, iy + ih);
+        lg.addColorStop(0, mix(C, '#ffffff', .42)); lg.addColorStop(.3, mix(C, '#ffffff', .1)); lg.addColorStop(.62, mix(C, C, 0)); lg.addColorStop(1, mix(C, '#000000', .5));
+        ctx.fillStyle = lg; ctx.fill(liq);
+        ctx.save(); ctx.clip(liq);
+        for (let j = 0; j < 3; j++) { ctx.beginPath(); for (let x = ix; x <= Math.min(fx + 14, ix + iw); x += 6) { const y = iy + ih * (.52 + .15 * j) + Math.sin(x * .028 + T * (1.1 + j * .45) + j * 2) * 2.4; x === ix ? ctx.moveTo(x, y) : ctx.lineTo(x, y); }
+          ctx.strokeStyle = 'rgba(255,255,255,' + (.13 - j * .03) + ')'; ctx.lineWidth = 3.2 - j * .6; ctx.stroke(); }
+        const eg = ctx.createLinearGradient(ix, 0, ix + ih, 0); eg.addColorStop(0, 'rgba(0,0,0,.35)'); eg.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = eg; ctx.fillRect(ix, iy, ih, ih);
+        const span = Math.min(fx, ix + iw) - ix - 8;
+        if (span > 20 && !still) for (const b of bubbles) { const bx = ix + 4 + b.x * span + Math.sin(b.ph) * 1.6, k = Math.round(b.x * (na - 1)), s0 = top[Math.min(top.length - 1, Math.max(0, k))][1], by = iy + ih - 2 - b.y * (iy + ih - 4 - s0);
+          ctx.beginPath(); ctx.arc(bx, by, b.r, 0, 6.3); ctx.fillStyle = 'rgba(255,255,255,.16)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = .8; ctx.stroke();
+          ctx.beginPath(); ctx.arc(bx - b.r * .3, by - b.r * .3, b.r * .3, 0, 6.3); ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.fill(); }
+        ctx.restore();
+        const line = (dy) => { ctx.beginPath(); top.forEach((q, i) => i ? ctx.lineTo(q[0], q[1] + dy) : ctx.moveTo(q[0], q[1] + dy)); };
+        line(2.6); ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = 3.4; ctx.stroke();
+        line(0); ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 1.5; ctx.lineJoin = 'round'; ctx.stroke();
+        if (frontPts.length) { ctx.beginPath(); ctx.moveTo(fx, lastY); for (const q of frontPts) ctx.lineTo(q[0], q[1]); ctx.strokeStyle = 'rgba(255,255,255,.42)'; ctx.lineWidth = 1.3; ctx.stroke(); }
+        ctx.restore();
+      }
+      const r = TH / 2, a = dark ? 1 : 1.25;
+      const hl = ctx.createLinearGradient(padX, 0, padX + ow, 0); hl.addColorStop(0, 'rgba(255,255,255,0)'); hl.addColorStop(.08, 'rgba(255,255,255,' + .75 * a + ')'); hl.addColorStop(.55, 'rgba(255,255,255,' + .5 * a + ')'); hl.addColorStop(.97, 'rgba(255,255,255,0)');
+      ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(padX + r * .8, ty + 6); ctx.lineTo(padX + ow - r * .8, ty + 6); ctx.strokeStyle = hl; ctx.lineWidth = 3; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(padX + ow * .14, ty + 11.5); ctx.lineTo(padX + ow * .62, ty + 11.5); ctx.strokeStyle = 'rgba(255,255,255,' + .22 * a + ')'; ctx.lineWidth = 1.1; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(padX + r, ty + TH - 5); ctx.lineTo(padX + ow - r, ty + TH - 5); ctx.strokeStyle = 'rgba(255,255,255,' + .13 * a + ')'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.beginPath(); ctx.arc(padX + r, ty + r, r - 5, Math.PI * .78, Math.PI * 1.18); ctx.strokeStyle = 'rgba(255,255,255,' + .4 * a + ')'; ctx.lineWidth = 2.2; ctx.stroke();
+      ctx.beginPath(); ctx.arc(padX + ow - r, ty + r, r - 5, -Math.PI * .34, Math.PI * .08); ctx.strokeStyle = 'rgba(255,255,255,' + .3 * a + ')'; ctx.lineWidth = 2; ctx.stroke();
+      const og = ctx.createLinearGradient(0, ty, 0, ty + TH);
+      if (dark) { og.addColorStop(0, 'rgba(255,255,255,.6)'); og.addColorStop(.5, 'rgba(255,255,255,.12)'); og.addColorStop(1, 'rgba(255,255,255,.34)'); }
+      else { og.addColorStop(0, 'rgba(255,255,255,.95)'); og.addColorStop(.5, 'rgba(80,92,112,.35)'); og.addColorStop(1, 'rgba(80,92,112,.55)'); }
+      ctx.strokeStyle = og; ctx.lineWidth = 1.3; ctx.stroke(outer);
+      ctx.strokeStyle = dark ? 'rgba(0,0,0,.4)' : 'rgba(60,72,92,.3)'; ctx.lineWidth = 1; ctx.stroke(inner);
+      ctx.lineCap = 'butt';
+      for (const q of TICKS) { const x = ix + iw * q / 100; ctx.beginPath(); ctx.moveTo(x, ty + 1.5); ctx.lineTo(x, ty + 10); ctx.strokeStyle = mix(col.fg, col.fg, 0, .5); ctx.lineWidth = 1; ctx.stroke(); }
+      if (GOAL < 100) { const x = ix + iw * GOAL / 100; ctx.save(); ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.moveTo(x, ty - 4); ctx.lineTo(x, ty + TH + 4); ctx.strokeStyle = mix(col.fg, col.fg, 0, .85); ctx.lineWidth = 1.6; ctx.stroke(); ctx.restore(); }
+    };
+    const resize = () => { dpr = Math.min(2, window.devicePixelRatio || 1); W = cv.clientWidth; if (!W) return; G.TH = W < 520 ? 36 : 42; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); if (still || !front) front = still ? targetX() : geo().ix; draw(); };
+    let last = 0;
+    const loop = (now) => { if (!alive) return; raf = requestAnimationFrame(loop); if (!visible || !W) { last = now; return; } let dt = Math.min(.05, (now - last) / 1000 || 0); last = now; T += dt;
+      while (dt > 0) { const s2 = Math.min(dt, 1 / 120); step(s2); dt -= s2; } draw(); };
+    let px = null, pt = 0;
+    const colAt = (x) => { const { ix, iw } = geo(); return Math.round((x - ix) / iw * (N - 1)); };
+    cv.addEventListener('pointermove', (e) => { const rc = cv.getBoundingClientRect(), x = e.clientX - rc.left, now = performance.now();
+      if (px != null) { const sp = (x - px) / Math.max(8, now - pt) * 1000, k = colAt(x), am = Math.max(-90, Math.min(90, sp * .09)); for (let j = -3; j <= 3; j++) if (k + j >= 0 && k + j < N) v[k + j] -= Math.abs(am) * (1 - Math.abs(j) / 4); vt += Math.max(-.012, Math.min(.012, sp * .00002)); }
+      px = x; pt = now; });
+    cv.addEventListener('pointerleave', () => { px = null; });
+    cv.addEventListener('pointerdown', (e) => { const rc = cv.getBoundingClientRect(), k = colAt(e.clientX - rc.left); for (let j = -4; j <= 4; j++) if (k + j >= 0 && k + j < N) v[k + j] += 170 * (1 - Math.abs(j) / 5); });
+    let sy0 = window.scrollY; const onScroll = () => { const d = window.scrollY - sy0; sy0 = window.scrollY; vt += Math.max(-.05, Math.min(.05, d * .0012)); };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    readColors(); const colTimer = setInterval(() => { readColors(); if (still) draw(); }, 1000);
+    const ro = new ResizeObserver(resize); ro.observe(cv);
+    const io = 'IntersectionObserver' in window ? new IntersectionObserver((es) => { const was = visible; visible = es[0].isIntersecting; if (visible && !was && !still) vt += .12; }) : null; if (io) io.observe(cv);
+    if (!still) { vt = .3; raf = requestAnimationFrame((t) => { last = t; raf = requestAnimationFrame(loop); }); }
+    const stop = () => { alive = false; cancelAnimationFrame(raf); clearInterval(colTimer); ro.disconnect(); if (io) io.disconnect(); window.removeEventListener('scroll', onScroll); };
+    return { el: cv, stop };
+  };
   dash.draw('qmbar', (el) => {
+    if (el.__vialStop) { el.__vialStop(); el.__vialStop = null; }
     el.replaceChildren(); const p = qmPer(), q = dash.data('qc_month'), t = dash.data('tech_table'); if (!p || q.status !== 'ok') return;
     const ids = qmIds(t, q);
     const rows = q.data.filter((r) => r.date >= p.start && r.date <= p.end);
@@ -2582,9 +2697,10 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     el.style.setProperty('--qm-c', ok ? 'var(--color-ok)' : 'var(--color-bad)');
     const lab = fbEl('div', 'lab'), big = fbEl('div', 'big'); big.append(fbEl('b', null, Math.round(pct) + '%'), document.createTextNode(' '), fbEl('span', null, done + ' of ' + total + ' QCs done'));
     const pc = fbEl('div', 'pace'); pc.append(fbEl('span', null, 'Fiscal day ' + pace.day + ' of ' + pace.total + ' · goal ' + goal + '% by today'), fbEl('span', 'pill', ok ? 'On pace' : 'Behind pace'));
-    lab.append(big, pc); el.append(lab, qmTube(pct, goal, false, wkEnds));
-    const sc = fbEl('div', 'sc-qm-scale'); const lbl = (v, txt, cls) => { const s2 = fbEl('span', cls || null, txt); s2.style.left = v + '%'; if (v <= 3) s2.style.transform = 'none'; if (v >= 97) s2.style.transform = 'translateX(-100%)'; sc.appendChild(s2); };
-    lbl(0, fbmd(p.start)); wkEnds.forEach((v, i) => { if (Math.abs(v - goal) > 7) lbl(v, 'Wk ' + (i + 1) + ' end'); }); lbl(goal, 'Today ' + goal + '%', 'now'); if (100 - goal > 7) lbl(100, fbmd(p.end));
+    const vl = qmVial(pct, goal, wkEnds); el.__vialStop = vl.stop;
+    lab.append(big, pc); el.append(lab, vl.el);
+    const sc = fbEl('div', 'sc-qm-scale vial'); const lbl = (v, txt, cls) => { const s2 = fbEl('span', cls || null, txt); s2.style.left = v + '%'; if (v <= 3) s2.style.transform = 'none'; if (v >= 97) s2.style.transform = 'translateX(-100%)'; sc.appendChild(s2); };
+    lbl(0, fbmd(p.start)); if ((el.clientWidth || 999) >= 560) wkEnds.forEach((v, i) => { if (Math.abs(v - goal) > 7) lbl(v, 'Wk ' + (i + 1) + ' end'); }); lbl(goal, 'Today ' + goal + '%', 'now'); if (100 - goal > 7) lbl(100, fbmd(p.end));
     el.appendChild(sc);
   });
   dash.draw('qmcards', (el) => {
