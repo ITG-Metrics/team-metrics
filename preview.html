@@ -725,6 +725,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   .sc-rep-count { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
   /* Orbs (preview, Nov 10): glass sphere, liquid filled toward the target, rolling surface and rising bubbles */
   .sc-orbwrap { flex: none; line-height: 0; }
+  :root { --sc-orb-near: #e3b21f; }
   .sc-big-row:has(.sc-orbwrap) { align-items: center; gap: 14px; }
   .sc-orb { display: block; overflow: visible; }
   .sc-orb .glass { fill: color-mix(in srgb, var(--color-fg) 9%, var(--color-bg)); }
@@ -1665,7 +1666,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     const NS = 'http://www.w3.org/2000/svg', mk = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
     const id = 'orb' + (++SC.orbN), ok = v != null && v >= T, lo = Math.max(0, T - 12);
     const fr = v == null ? 0 : Math.max(0.05, Math.min(1, (v - lo) / (100 - lo))), tf = (T - lo) / (100 - lo);
-    const y = 92 - fr * 84, ty = 92 - tf * 84, col = ok ? 'var(--color-ok)' : 'var(--color-bad)';
+    const y = 92 - fr * 84, ty = 92 - tf * 84, near = !ok && v != null && T - v <= 1, col = ok ? 'var(--color-ok)' : near ? 'var(--sc-orb-near)' : 'var(--color-bad)';
     const s = mk('svg', { viewBox: '0 0 100 100', width: size, height: size, class: 'sc-orb', role: 'img', 'aria-hidden': 'true' });
     const d = mk('defs', {}); const cp = mk('clipPath', { id: id + 'c' }); cp.appendChild(mk('circle', { cx: 50, cy: 50, r: 44 })); d.appendChild(cp);
     const lg = mk('linearGradient', { id: id + 'g', x1: 0, y1: 0, x2: 0, y2: 1 }); lg.append(mk('stop', { offset: 0, 'stop-color': col, 'stop-opacity': .95 }), mk('stop', { offset: 1, 'stop-color': col, 'stop-opacity': .72 })); d.appendChild(lg);
