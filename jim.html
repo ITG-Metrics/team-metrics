@@ -1131,8 +1131,8 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
         <h2 class="sc-h2">Monthly QCs</h2>
         <p class="sc-note" data-draw="qmnote" data-source="qc_month qc_month_period">—</p>
       </div>
-      <div class="sc-qm-team" data-draw="qmbar" data-source="qc_month qc_month_period tech_table"></div>
-      <div class="sc-qm-grid" data-draw="qmcards" data-source="qc_month qc_month_period tech_table"></div>
+      <div class="sc-qm-team" data-draw="qmbar" data-source="qc_month qc_month_period metrics"></div>
+      <div class="sc-qm-grid" data-draw="qmcards" data-source="qc_month qc_month_period metrics"></div>
     </div>
   </section>
 
@@ -2528,6 +2528,11 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   dash.draw('qmnote', (el) => { const p = qmPer(); if (!p) { el.textContent = '—'; return; }
     const left = qmDaysLeft(p);
     el.textContent = 'Ride Along and After the Fact QCs done by ' + (p.who || 'the supervisor') + ' in the fiscal month ' + fbmd(p.start) + ' to ' + fbmd(p.end) + '. Each tech needs 2 of each. ' + (left === 1 ? '1 day left.' : left + ' days left.') + (p.synced ? ' Synced from Catalyst QMS ' + new Date(p.synced).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '.' : ''); });
+  /* Only techs with jobs in the latest fiscal month (from BP-Ontrac metrics); a tech who hasn't worked this month is left out. */
+  const qmIds = (t, q) => { const m = dash.data('metrics');
+    if (m.status === 'ok' && m.data.length) { const ps = m.data.reduce((a, r) => r.period_start > a ? r.period_start : a, '');
+      return [...new Set(m.data.filter((r) => r.period_start === ps && +r.total_jobs > 0).map((r) => String(r.tech_id)))]; }
+    return t.status === 'ok' ? t.data.map((r) => String(r.tech_id)) : [...new Set(q.data.map((r) => String(r.tech_id)))]; };
   /* Pace, prorated by fiscal day: by the end of day d of an N-day fiscal month, d/N of the QCs should be done. Credit counts at most 2 of each type. */
   const qmPace = (p) => { const dt = (iso) => { const [y, m, d] = iso.split('-').map(Number); return new Date(y, m - 1, d); };
     const n = new Date(), t = new Date(n.getFullYear(), n.getMonth(), n.getDate()), s0 = dt(p.start), total = Math.round((dt(p.end) - s0) / 864e5) + 1;
@@ -2546,7 +2551,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   const qmCredit = (r) => Math.min(QM_NEED, r.ra) + Math.min(QM_NEED, r.atf);
   dash.draw('qmbar', (el) => {
     el.replaceChildren(); const p = qmPer(), q = dash.data('qc_month'), t = dash.data('tech_table'); if (!p || q.status !== 'ok') return;
-    const ids = t.status === 'ok' ? t.data.map((r) => String(r.tech_id)) : [...new Set(q.data.map((r) => String(r.tech_id)))];
+    const ids = qmIds(t, q);
     const rows = q.data.filter((r) => r.date >= p.start && r.date <= p.end);
     const done = ids.reduce((a, id) => a + qmCredit({ ra: rows.filter((r) => String(r.tech_id) === id && r.qc_type === 'Ride Along').length, atf: rows.filter((r) => String(r.tech_id) === id && r.qc_type === 'After the Fact').length }), 0);
     const total = ids.length * QM_NEED * 2, pct = total ? done / total * 100 : 0, pace = qmPace(p), goal = pace.goal, ok = pct >= goal;
@@ -2561,7 +2566,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   });
   dash.draw('qmcards', (el) => {
     el.replaceChildren(); const p = qmPer(), q = dash.data('qc_month'), t = dash.data('tech_table'); if (!p || q.status !== 'ok') return;
-    const ids = t.status === 'ok' ? t.data.map((r) => String(r.tech_id)) : [...new Set(q.data.map((r) => String(r.tech_id)))];
+    const ids = qmIds(t, q);
     const rows = q.data.filter((r) => r.date >= p.start && r.date <= p.end), left = qmDaysLeft(p);
     const st = ids.map((id) => { const ra = rows.filter((r) => String(r.tech_id) === id && r.qc_type === 'Ride Along').length, atf = rows.filter((r) => String(r.tech_id) === id && r.qc_type === 'After the Fact').length;
       return { id, ra, atf, rn: Math.max(0, QM_NEED - ra), an: Math.max(0, QM_NEED - atf) }; })
