@@ -2780,7 +2780,8 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     const jobs = top((r) => r.job, phone ? 5 : 6), jobOf = (r) => jobs.some(([k]) => k === r.job) ? r.job : 'Other';
     const fixes = top((r) => r.fix2, 6), fixOf = (r) => fixes.some(([k]) => k === r.fix2) ? r.fix2 : 'Other';
     const pal = ['var(--sc-c2)', 'var(--sc-c1)', 'var(--sc-c4)', 'var(--sc-c3)', 'var(--sc-c5)', '#d4a72c', 'var(--sc-c6)'];
-    const colOf = (j) => j === 'Other' ? 'var(--sc-c6)' : pal[jobs.findIndex(([k]) => k === j) % pal.length];
+    const colRank = repTop(repFilter(all, 'job'), (r) => r.job, 99).map(([k]) => k); /* colors keep each job type's place when one is selected */
+    const colOf = (j) => { if (j === 'Other') return 'var(--sc-c6)'; const i = colRank.indexOf(j); return pal[(i < 0 ? jobs.findIndex(([k]) => k === j) : i) % (pal.length - 1)]; };
     const H = phone ? Math.max(260, jobs.length * 62) : 360, pad = 16, gap = 10;
     const hubX = phone ? 40 : 110, jobX = phone ? 112 : Math.round(W * 0.42), fixX = W - 210, nodeW = 10;
     const scale = (cnt) => (H - 2 * pad - gap * (cnt - 1)) / n;
