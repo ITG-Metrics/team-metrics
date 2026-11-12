@@ -792,6 +792,8 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   .sc-qm-tube.thin .liq, .sc-qm-tube.thin .front, .sc-qm-tube.thin .edge { transition: none !important; }
   .sc-qm-vial { display: block; width: 100%; height: 92px; touch-action: pan-y; cursor: pointer; margin-top: -4px; }
   .sc-qm-scale.vial { margin: -16px 13.5px 0; }
+  .sc-qm-ticks { display: block; width: 100%; height: 46px; margin-top: 4px; }
+  .sc-qm-scale.ticks { margin: 4px 6px 0; }
   .sc-qm-scale { position: relative; height: 14px; font-size: 10.5px; color: var(--color-fg-muted); font-variant-numeric: tabular-nums; }
   .sc-qm-scale span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
   .sc-qm-scale span.now { color: var(--color-fg); font-weight: 600; }
@@ -2790,6 +2792,46 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     const stop = () => { alive = false; cancelAnimationFrame(raf); clearInterval(colTimer); ro.disconnect(); if (io) io.disconnect(); window.removeEventListener('scroll', onScroll); };
     return { el: cv, stop };
   };
+  /* Tick strip for the Monthly QCs team bar (Dillon, Nov 12; replaces the glass vial): 100 ticks, a taller one every 10,
+     lit in the pace color up to the team's percent, plus a goal tick and arrow at today's prorated goal. Fills once, then stops.
+     qmTicks(pct, goal) returns { el, stop } like qmVial did. */
+  const qmTicks = (pct, goal) => {
+    const cv = document.createElement('canvas'); cv.className = 'sc-qm-ticks'; cv.setAttribute('role', 'img');
+    cv.setAttribute('aria-label', Math.round(pct) + '% of QCs done, goal ' + goal + '% by today');
+    const target = Math.max(0, Math.min(100, Math.round(pct))); let lit = 0, raf = 0;
+    const paint = () => {
+      const W = cv.clientWidth, H = cv.clientHeight; if (!W || !H) return;
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+      const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+      const cs = getComputedStyle(cv), col = cs.getPropertyValue('--qm-c').trim() || cs.color, fg = getComputedStyle(document.body).color;
+      const pad = 6, top = 12, bot = H - 4, step = (W - pad * 2) / 100, w = Math.max(1.2, Math.min(3, step * 0.45));
+      ctx.lineCap = 'round';
+      for (let i = 0; i < 100; i++) {
+        const x = pad + step * (i + 0.5), major = i % 10 === 0, on = i < lit;
+        ctx.globalAlpha = on ? 1 : 0.16; ctx.strokeStyle = on ? col : fg; ctx.lineWidth = major ? w * 1.3 : w;
+        ctx.shadowColor = on ? col : 'transparent'; ctx.shadowBlur = on ? 5 : 0;
+        ctx.beginPath(); ctx.moveTo(x, major ? top - 4 : top); ctx.lineTo(x, bot); ctx.stroke();
+      }
+      ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+      const gx = pad + step * goal; ctx.strokeStyle = fg; ctx.lineWidth = 2.4;
+      ctx.beginPath(); ctx.moveTo(gx, top - 6); ctx.lineTo(gx, bot + 2); ctx.stroke();
+      ctx.fillStyle = fg; ctx.beginPath(); ctx.moveTo(gx - 5, 0.5); ctx.lineTo(gx + 5, 0.5); ctx.lineTo(gx, 6.5); ctx.closePath(); ctx.fill();
+    };
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const run = () => {
+      if (still) { lit = target; paint(); return; }
+      const t0 = performance.now();
+      const step = (now) => { const k = Math.min(1, (now - t0) / 1400), e = 1 - Math.pow(1 - k, 3); lit = Math.round(target * e); paint(); if (k < 1) raf = requestAnimationFrame(step); };
+      raf = requestAnimationFrame(step);
+    };
+    const ro = new ResizeObserver(() => paint()); ro.observe(cv);
+    const mo = new MutationObserver(() => paint()); mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class', 'style'] });
+    const io = 'IntersectionObserver' in window ? new IntersectionObserver((es) => { if (es[0].isIntersecting) { io.disconnect(); run(); } }) : null;
+    if (io) io.observe(cv); else requestAnimationFrame(run);
+    const stop = () => { cancelAnimationFrame(raf); ro.disconnect(); mo.disconnect(); if (io) io.disconnect(); };
+    return { el: cv, stop };
+  };
   dash.draw('qmbar', (el) => {
     if (el.__vialStop) { el.__vialStop(); el.__vialStop = null; }
     el.replaceChildren(); const p = qmPer(), q = dash.data('qc_month'), t = dash.data('tech_table'); if (!p || q.status !== 'ok') return;
@@ -2801,9 +2843,9 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     el.style.setProperty('--qm-c', ok ? 'var(--color-ok)' : 'var(--color-bad)');
     const lab = fbEl('div', 'lab'), big = fbEl('div', 'big'); big.append(fbEl('b', null, Math.round(pct) + '%'), document.createTextNode(' '), fbEl('span', null, done + ' of ' + total + ' QCs done'));
     const pc = fbEl('div', 'pace'); pc.append(fbEl('span', null, 'Fiscal day ' + pace.day + ' of ' + pace.total + ' · goal ' + goal + '% by today'), fbEl('span', 'pill', ok ? 'On pace' : 'Behind pace'));
-    const vl = qmVial(pct, goal, wkEnds); el.__vialStop = vl.stop;
+    const vl = qmTicks(pct, goal); el.__vialStop = vl.stop;
     lab.append(big, pc); el.append(lab, vl.el);
-    const sc = fbEl('div', 'sc-qm-scale vial'); const lbl = (v, txt, cls) => { const s2 = fbEl('span', cls || null, txt); s2.style.left = v + '%'; if (v <= 3) s2.style.transform = 'none'; if (v >= 97) s2.style.transform = 'translateX(-100%)'; sc.appendChild(s2); };
+    const sc = fbEl('div', 'sc-qm-scale ticks'); const lbl = (v, txt, cls) => { const s2 = fbEl('span', cls || null, txt); s2.style.left = v + '%'; if (v <= 3) s2.style.transform = 'none'; if (v >= 97) s2.style.transform = 'translateX(-100%)'; sc.appendChild(s2); };
     lbl(0, fbmd(p.start)); if ((el.clientWidth || 999) >= 560) wkEnds.forEach((v, i) => { if (Math.abs(v - goal) > 7) lbl(v, 'Wk ' + (i + 1) + ' end'); }); lbl(goal, 'Today ' + goal + '%', 'now'); if (100 - goal > 7) lbl(100, fbmd(p.end));
     el.appendChild(sc);
   });
