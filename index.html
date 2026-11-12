@@ -1069,11 +1069,6 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
               <th data-field="ftr" data-col="ftr"><button type="button">FTR</button></th>
               <th data-field="ftr_fails" data-col="ftr_fails" class="hide-sm"><button type="button">FTR fails</button></th>
               <th data-field="ftr_needed" data-col="ftr_needed" class="hide-sm"><button type="button">Fixes to target</button></th>
-              <th data-field="repeat" data-col="repeat" class="grp hide-sm"><button type="button">Repeat</button></th>
-              <th data-field="rework" data-col="rework" class="hide-sm"><button type="button">Rework</button></th>
-              <th data-field="pht" data-col="pht" class="hide-sm"><button type="button">PHT pass</button></th>
-              <th data-field="met" data-col="met" class="hide-sm"><button type="button">Appts met</button></th>
-              <th data-field="ftr_hist" data-col="ftr" class="hide-sm"><button type="button">FTR, 6 months</button></th>
             </tr>
           </thead>
           <tbody data-draw="techrows"></tbody>
@@ -2075,11 +2070,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
         if (r.ftr_needed > 0 && r.ftr != null) { const q = Math.max(0.03, Math.min(1, (r.ftr - 80) / (SC.T.ftr - 80))); /* ring runs from 80% FTR to the target */ const NS = 'http://www.w3.org/2000/svg', sv = document.createElementNS(NS, 'svg'); sv.setAttribute('class', 'sc-ring'); sv.setAttribute('viewBox', '0 0 20 20');
           sv.innerHTML = '<circle class="bg" cx="10" cy="10" r="7.5"/><circle class="fg" cx="10" cy="10" r="7.5" pathLength="1" stroke-dasharray="' + q.toFixed(3) + ' 1"/>';
           const tt = document.createElementNS(NS, 'title'); tt.textContent = 'FTR ' + SC.pct(r.ftr) + ', target ' + SC.tgt(SC.T.ftr); sv.appendChild(tt); c.prepend(sv); } }
-      trend(td(SC.pct(r.repeat), 'grp hide-sm'), r.repeat, pc && pc.repeat, 'repeat');
-      trend(td(SC.pct(r.rework), 'hide-sm'), r.rework, pc && pc.rework, 'rework');
-      trend(td(SC.pct(r.pht), 'hide-sm'), r.pht, pc && pc.pht, 'pht');
-      trend(td(SC.pct(r.met), 'hide-sm'), r.met, pc && pc.met, 'met');
-      spark(td(null, 'hide-sm'), r.ftr_hist);
+      /* Repeat, Rework, PHT pass, Appts met and FTR 6-month columns removed (Dillon, Nov 12). */
       /* Picking a tech in the table scrolls Tech detail into view (Dillon, Nov 10). */
       const snap = () => requestAnimationFrame(() => { const c = document.getElementById('tech-detail'); if (c) c.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); });
       tr.addEventListener('click', () => { pickTech(r.tech_id); snap(); });
