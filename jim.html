@@ -2792,7 +2792,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     const stop = () => { alive = false; cancelAnimationFrame(raf); clearInterval(colTimer); ro.disconnect(); if (io) io.disconnect(); window.removeEventListener('scroll', onScroll); };
     return { el: cv, stop };
   };
-  /* Tick strip for the Monthly QCs team bar (Dillon, Nov 12; replaces the glass vial): 100 ticks, a taller one every 10,
+  /* Tick strip for the Monthly QCs team bar (Dillon, Nov 12; replaces the glass vial): 100–300 ticks, a taller one every 10,
      lit in the pace color up to the team's percent, plus a goal tick and arrow at today's prorated goal. Fills once, then stops.
      qmTicks(pct, goal) returns { el, stop } like qmVial did. */
   const qmTicks = (pct, goal) => {
@@ -2805,16 +2805,18 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
       if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
       const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
       const cs = getComputedStyle(cv), col = cs.getPropertyValue('--qm-c').trim() || cs.color, fg = getComputedStyle(document.body).color;
-      const pad = 6, top = 12, bot = H - 4, step = (W - pad * 2) / 100, w = Math.max(1.2, Math.min(3, step * 0.45));
+      /* More ticks on wider screens (Dillon, Nov 12): 300 on desktop, 200 on tablets, 100 on phones. */
+      const N = W >= 900 ? 300 : W >= 560 ? 200 : 100, MAJ = N / 10, on0 = Math.round(lit / 100 * N);
+      const pad = 6, top = 12, bot = H - 4, step = (W - pad * 2) / N, w = Math.max(1, Math.min(2.6, step * 0.5));
       ctx.lineCap = 'round';
-      for (let i = 0; i < 100; i++) {
-        const x = pad + step * (i + 0.5), major = i % 10 === 0, on = i < lit;
+      for (let i = 0; i < N; i++) {
+        const x = pad + step * (i + 0.5), major = i % MAJ === 0, on = i < on0;
         ctx.globalAlpha = on ? 1 : 0.16; ctx.strokeStyle = on ? col : fg; ctx.lineWidth = major ? w * 1.3 : w;
-        ctx.shadowColor = on ? col : 'transparent'; ctx.shadowBlur = on ? 5 : 0;
+        ctx.shadowColor = on ? col : 'transparent'; ctx.shadowBlur = on ? 4 : 0;
         ctx.beginPath(); ctx.moveTo(x, major ? top - 4 : top); ctx.lineTo(x, bot); ctx.stroke();
       }
       ctx.globalAlpha = 1; ctx.shadowBlur = 0;
-      const gx = pad + step * goal; ctx.strokeStyle = fg; ctx.lineWidth = 2.4;
+      const gx = pad + (W - pad * 2) * goal / 100; ctx.strokeStyle = fg; ctx.lineWidth = 2.4;
       ctx.beginPath(); ctx.moveTo(gx, top - 6); ctx.lineTo(gx, bot + 2); ctx.stroke();
       ctx.fillStyle = fg; ctx.beginPath(); ctx.moveTo(gx - 5, 0.5); ctx.lineTo(gx + 5, 0.5); ctx.lineTo(gx, 6.5); ctx.closePath(); ctx.fill();
     };
