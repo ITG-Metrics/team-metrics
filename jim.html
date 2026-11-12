@@ -1063,7 +1063,6 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
               <th data-field="tu" data-col="tu" class="grp"><button type="button">Tool usage</button></th>
               <th data-field="tu_fails" data-col="tu_fails" class="hide-sm"><button type="button">Tool usage fails</button></th>
               <th data-field="tnps" data-col="tnps"><button type="button">tNPS</button></th>
-              <th data-field="tnps_3mo" data-col="tnps_3mo" class="hide-sm"><button type="button">tNPS 3 mo</button></th>
               <th data-field="tnps_fails" data-col="tnps_fails" class="hide-sm"><button type="button">tNPS fails</button></th>
               <th data-field="tnps_needed" data-col="tnps_needed" class="hide-sm"><button type="button">Promoters to target</button></th>
               <th data-field="ftr" data-col="ftr"><button type="button">FTR</button></th>
@@ -2061,7 +2060,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
       { const c = td(r.tu_fails == null ? '—' : String(r.tu_fails), 'hide-sm' + (r.tu_fails > 0 ? ' miss' : '')); if (r.tu_fails == null && !r.away) c.title = 'Shown for the current month only'; }
       const tn = td(SC.pct(r.tnps), r.tnps_miss ? 'miss' : r.low_sample ? 'dim' : ''); trend(tn, r.tnps, pc && pc.tnps_surveys ? pc.tnps : null, 'tnps');
       if (r.low_sample) { const s = document.createElement('span'); s.className = 'sc-low'; s.textContent = 'low'; s.title = r.tnps_surveys + ' surveys'; tn.appendChild(s); }
-      td(SC.pct(r.tnps_3mo), 'hide-sm' + (r.tnps_3mo != null && r.tnps_3mo < SC.T.tnps ? ' miss' : ''));
+      /* tNPS 3 mo column removed (Dillon, Nov 12). */
       { const c = td(r.tnps_fails == null ? '—' : String(r.tnps_fails), 'hide-sm' + (r.tnps_fails > 0 ? ' miss' : '')); if (r.tnps_fails == null && !r.away) c.title = 'Shown for the current month only'; }
       { const c = td(r.tnps_needed > 0 ? String(r.tnps_needed) : '—', 'hide-sm' + (r.tnps_needed > 0 ? ' miss' : '')); if (r.tnps_needed == null && !r.away) c.title = r.tnps_surveys === 0 ? 'No surveys yet this month' : 'Shown for the current month only'; }
       trend(td(SC.pct(r.ftr), r.ftr_miss ? 'miss' : ''), r.ftr, pc && pc.ftr, 'ftr');
