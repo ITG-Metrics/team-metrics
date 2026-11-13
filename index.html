@@ -806,8 +806,11 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   @media (prefers-reduced-motion: reduce) { .sc-qm-tube .liq .wv, .sc-qm-tube .front, .sc-qm-tube .edge { animation: none !important; } .sc-qm-tube .bub { display: none; } .sc-qm-tube .liq, .sc-qm-tube .edge, .sc-qm-tube .front { transition: none; } }
   /* Overview hero: Tool usage, tNPS and FTR side by side with glass orbs (Nov 11), like the Market Metrics page. */
   .sc-hero { display: grid; gap: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .sc-hero-card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: calc(var(--cds-radius) * 1.4); padding: 18px 20px; display: flex; align-items: center; gap: 20px; min-width: 0; }
+  /* Hero cards: number on top, horizontal tick gauge underneath (Dillon, Nov 12; replaced the glass orbs, same as the market site). */
+  .sc-hero-card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: calc(var(--cds-radius) * 1.4); padding: 16px 18px 12px; display: grid; gap: 8px; min-width: 0; }
   .sc-hero-txt { display: grid; gap: 4px; min-width: 0; }
+  .sc-hero-row { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 4px 14px; }
+  .sc-hero-ticks { display: block; width: 100%; height: 54px; }
   .sc-hero-k { font-size: 13px; color: var(--color-fg-muted); display: flex; align-items: center; gap: 7px; }
   .sc-hero-k i { width: 8px; height: 8px; border-radius: 50%; background: var(--hc, var(--color-fg-muted)); display: inline-block; }
   .sc-hero-v { font-family: var(--font-anthropic-serif); font-size: 46px; line-height: 1; font-variant-numeric: tabular-nums; color: var(--hc, var(--color-fg)); }
@@ -816,8 +819,8 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   .sc-hero-card.good { --hc: var(--color-ok); } .sc-hero-card.near { --hc: #9a7408; } .sc-hero-card.bad { --hc: var(--color-bad); }
   :root[data-theme="dark"] .sc-hero-card.near { --hc: #e3b21f; }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sc-hero-card.near { --hc: #e3b21f; } }
-  @media (max-width: 60rem) { .sc-hero-card { flex-direction: column; text-align: center; padding: 14px 10px; gap: 10px; } .sc-hero-k, .sc-hero-tags { justify-content: center; } .sc-hero-v { font-size: 36px; } }
-  @media (max-width: 34rem) { .sc-hero { gap: 6px; } .sc-hero-card { padding: 10px 4px; gap: 8px; } .sc-hero-k { font-size: 12px; } .sc-hero-v { font-size: 22px; } .sc-hero-tags { font-size: 10.5px; flex-direction: column; gap: 1px; } }
+  @media (max-width: 60rem) { .sc-hero-card { padding: 14px 12px 10px; } .sc-hero-v { font-size: 36px; } }
+  @media (max-width: 34rem) { .sc-hero { gap: 6px; } .sc-hero-card { padding: 10px 6px 6px; gap: 6px; text-align: center; } .sc-hero-row, .sc-hero-k, .sc-hero-tags { justify-content: center; } .sc-hero-ticks { height: 40px; } .sc-hero-k { font-size: 12px; } .sc-hero-v { font-size: 22px; } .sc-hero-tags { font-size: 10.5px; flex-direction: column; gap: 1px; } }
   /* Repeats tab additions (Nov 11): repeat rate by tech, came back fast cards, repeat calendar */
   .sc-rate-avg { display: flex; align-items: center; gap: 6px; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
   .sc-rate-avg i { display: inline-block; width: 14px; border-top: 2px dashed var(--color-fg); opacity: .7; }
@@ -928,28 +931,28 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     <!-- The three company targets side by side at the top, with the glass orbs (Dillon, Nov 11: same layout as the Market Metrics page). -->
     <div class="sc-hero">
       <div class="sc-hero-card" data-hero="tu">
-        <div class="sc-orbwrap" data-draw="orb" data-kpi="tu" data-size="auto" data-source="team_latest"></div>
         <div class="sc-hero-txt">
           <span class="sc-hero-k"><i></i>Tool usage</span>
-          <span class="sc-hero-v" data-draw="kpi" data-kpi="tu" data-source="team_latest" data-field="tu" data-row="0">—</span>
-          <div class="sc-hero-tags"><span>Target <span data-draw="target" data-kpi="tu">—</span></span><span class="sc-delta" data-draw="delta" data-kpi="tu" data-source="team_latest" data-field="d_tu" data-row="0">—</span></div>
+          <div class="sc-hero-row"><span class="sc-hero-v" data-draw="kpi" data-kpi="tu" data-source="team_latest" data-field="tu" data-row="0">—</span>
+          <div class="sc-hero-tags"><span>Target <span data-draw="target" data-kpi="tu">—</span></span><span class="sc-delta" data-draw="delta" data-kpi="tu" data-source="team_latest" data-field="d_tu" data-row="0">—</span></div></div>
         </div>
+        <canvas class="sc-hero-ticks" data-draw="heroticks" data-kpi="tu" data-source="team_latest" role="img"></canvas>
       </div>
       <div class="sc-hero-card" data-hero="tnps">
-        <div class="sc-orbwrap" data-draw="orb" data-kpi="tnps" data-size="auto" data-source="team_latest"></div>
         <div class="sc-hero-txt">
           <span class="sc-hero-k"><i></i>tNPS</span>
-          <span class="sc-hero-v" data-draw="kpi" data-kpi="tnps" data-source="team_latest" data-field="tnps" data-row="0">—</span>
-          <div class="sc-hero-tags"><span>Target <span data-draw="target" data-kpi="tnps">—</span></span><span class="sc-delta" data-draw="delta" data-kpi="tnps" data-source="team_latest" data-field="d_tnps" data-row="0">—</span></div>
+          <div class="sc-hero-row"><span class="sc-hero-v" data-draw="kpi" data-kpi="tnps" data-source="team_latest" data-field="tnps" data-row="0">—</span>
+          <div class="sc-hero-tags"><span>Target <span data-draw="target" data-kpi="tnps">—</span></span><span class="sc-delta" data-draw="delta" data-kpi="tnps" data-source="team_latest" data-field="d_tnps" data-row="0">—</span></div></div>
         </div>
+        <canvas class="sc-hero-ticks" data-draw="heroticks" data-kpi="tnps" data-source="team_latest" role="img"></canvas>
       </div>
       <div class="sc-hero-card" data-hero="ftr">
-        <div class="sc-orbwrap" data-draw="orb" data-kpi="ftr" data-size="auto" data-source="team_latest"></div>
         <div class="sc-hero-txt">
           <span class="sc-hero-k"><i></i>FTR</span>
-          <span class="sc-hero-v" data-draw="kpi" data-kpi="ftr" data-source="team_latest" data-field="ftr" data-row="0">—</span>
-          <div class="sc-hero-tags"><span>Target <span data-draw="target" data-kpi="ftr">—</span></span><span class="sc-delta" data-draw="delta" data-kpi="ftr" data-source="team_latest" data-field="d_ftr" data-row="0">—</span></div>
+          <div class="sc-hero-row"><span class="sc-hero-v" data-draw="kpi" data-kpi="ftr" data-source="team_latest" data-field="ftr" data-row="0">—</span>
+          <div class="sc-hero-tags"><span>Target <span data-draw="target" data-kpi="ftr">—</span></span><span class="sc-delta" data-draw="delta" data-kpi="ftr" data-source="team_latest" data-field="d_ftr" data-row="0">—</span></div></div>
         </div>
+        <canvas class="sc-hero-ticks" data-draw="heroticks" data-kpi="ftr" data-source="team_latest" role="img"></canvas>
       </div>
     </div>
     <div class="sc-grid">
@@ -1868,6 +1871,57 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     el.appendChild(SC.orb(r[k], SC.T[k], size).firstChild);
     const card = el.closest('.sc-hero-card'), v = r[k], T = SC.T[k];
     if (card) { card.classList.remove('good', 'near', 'bad'); if (v != null) card.classList.add(v >= T ? 'good' : T - v <= 1 ? 'near' : 'bad'); } });
+  /* Hero tick gauge (Dillon, Nov 12; replaced the hero orbs): ticks fill up to the team value in the card color, a target tick
+     with an arrow marks the target. Zoomed scale: 95–100% for tool usage, target − 10 to 100% otherwise. Colors follow the
+     market site: green at or above target, yellow within 0.5 (tNPS, FTR; tool usage has no yellow), red otherwise.
+     Fills once, then stops; repaints on theme change and resize. */
+  const heroTickGauges = new Set();
+  const paintHeroTicks = (g) => {
+    const cv = g.cv, W = cv.clientWidth, H = cv.clientHeight; if (!W || !H) return;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+    const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+    const card = cv.closest('.sc-hero-card'), cs = getComputedStyle(card), col = cs.getPropertyValue('--hc').trim() || cs.color;
+    const fg = getComputedStyle(document.body).color, muted = getComputedStyle(card.querySelector('.sc-hero-k') || card).color;
+    const T = g.T, lo = T >= 99 ? 95 : T - 10, hi = 100, pos = (x) => (Math.max(lo, Math.min(hi, x)) - lo) / (hi - lo);
+    const N = W >= 340 ? 120 : W >= 200 ? 80 : 40, pad = 6, step = (W - pad * 2) / N, w = Math.max(1.1, Math.min(2.4, step * 0.5));
+    const small = W < 200, top = 9, bot = H - (small ? 4 : 18), lit = Math.round(pos(g.v) * N * g.e);
+    ctx.lineCap = 'round';
+    for (let i = 0; i < N; i++) {
+      const x = pad + step * (i + 0.5), major = i % (N / 10) === 0, on = i < lit;
+      ctx.globalAlpha = on ? 1 : 0.14; ctx.strokeStyle = on ? col : fg; ctx.lineWidth = major ? w * 1.25 : w;
+      ctx.shadowColor = on ? col : 'transparent'; ctx.shadowBlur = on ? 4 : 0;
+      ctx.beginPath(); ctx.moveTo(x, major ? top : top + 4); ctx.lineTo(x, bot); ctx.stroke();
+    }
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+    const gx = pad + (W - pad * 2) * pos(T);
+    ctx.strokeStyle = fg; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(gx, top - 6); ctx.lineTo(gx, bot + 2); ctx.stroke();
+    ctx.fillStyle = fg; ctx.beginPath(); ctx.moveTo(gx - 5, 0); ctx.lineTo(gx + 5, 0); ctx.lineTo(gx, 6); ctx.closePath(); ctx.fill();
+    if (!small) {
+      ctx.font = '600 10.5px system-ui, sans-serif'; ctx.textBaseline = 'top'; ctx.fillStyle = muted;
+      if (gx - pad > 80) { ctx.textAlign = 'left'; ctx.fillText(lo + '%', pad, bot + 5); }
+      if (W - pad - gx > 80) { ctx.textAlign = 'right'; ctx.fillText('100%', W - pad, bot + 5); }
+      ctx.fillStyle = fg; ctx.textAlign = 'center'; ctx.fillText(({ es: 'Meta ', ht: 'Objektif ' }[(document.documentElement.lang || 'en').slice(0, 2)] || 'Target ') + T + '%', Math.max(40, Math.min(W - 44, gx)), bot + 5);
+    }
+  };
+  { const repaint = () => heroTickGauges.forEach((g) => { if (g.cv.isConnected) paintHeroTicks(g); else heroTickGauges.delete(g); });
+    new MutationObserver(repaint).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class', 'lang'] });
+    let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(repaint, 150); }); }
+  dash.draw('heroticks', (cv) => {
+    const r = latest(), k = cv.dataset.kpi, card = cv.closest('.sc-hero-card');
+    heroTickGauges.forEach((g) => { if (g.cv === cv) { cancelAnimationFrame(g.raf); heroTickGauges.delete(g); } });
+    card.classList.remove('good', 'near', 'bad');
+    const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, cv.width, cv.height);
+    if (!r || r[k] == null) return;
+    const v = r[k], T = SC.T[k], vr = Math.round(v * 10) / 10;
+    card.classList.add(vr >= T ? 'good' : T - vr <= (T >= 99 ? 0 : 0.5) ? 'near' : 'bad');
+    cv.setAttribute('aria-label', SC.pct(v) + ', target ' + T + '%');
+    const g = { cv, v, T, e: 0, raf: 0 }; heroTickGauges.add(g);
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { g.e = 1; requestAnimationFrame(() => paintHeroTicks(g)); return; }
+    const t0 = performance.now();
+    const step = (now) => { const p = Math.min(1, (now - t0) / 1400); g.e = 1 - Math.pow(1 - p, 3); paintHeroTicks(g); if (p < 1 && cv.isConnected) g.raf = requestAnimationFrame(step); };
+    g.raf = requestAnimationFrame(step);
+  });
   dash.draw('kpi', (el) => { const r = latest(); el.textContent = r ? SC.pct(r[el.dataset.kpi]) : '—'; });
   dash.draw('delta', (el) => {
     const r = latest(); const k = el.dataset.kpi;
