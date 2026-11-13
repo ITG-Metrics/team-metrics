@@ -431,6 +431,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   @media (max-width: 44rem) { .sc-fb-hero { grid-template-columns: 1fr; } }
   .sc-gauge { display: grid; justify-items: center; gap: 2px; }
   .sc-gauge svg { width: min(260px, 100%); height: auto; overflow: visible; }
+  .sc-gauge canvas.sc-fbdial { display: block; width: min(300px, 100%); height: 170px; }
   .sc-gauge .needle { transform-origin: 100px 100px; animation: sc-needle 1.4s cubic-bezier(.3,1.4,.5,1) .15s both; transform: rotate(var(--a)); }
   @keyframes sc-needle { from { transform: rotate(-90deg); } to { transform: rotate(var(--a)); } }
   .sc-gauge .val { font-family: var(--font-anthropic-serif); font-size: calc(var(--cds-font-size-title) * 1.1); line-height: 1; }
@@ -2633,18 +2634,53 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     const th = FB_THEMES.find((t) => t.id === SC.fb.theme);
     el.textContent = (SC.fb.tech ? 'Surveys for Tech ' + SC.fb.tech : 'All surveys') + (th ? ' · ' + th.label : '');
   });
-  /* tNPS gauge (Dillon, Nov 8): the needle sweeps to the team's tNPS this fiscal month; the dial runs 50 to 100. */
+  /* tNPS gauge (Dillon, Nov 8; tick dial since Nov 12): a half circle of 100 ticks from 50 to 100. Unlit ticks are faintly
+     tinted with their band (red under 85, yellow 85 to target, green at target and up); lit ticks glow in their band color
+     up to the team's tNPS this fiscal month, ending in a dot; a tick in the text color marks the target. Fills once when the
+     dial comes into view, then stops; repaints on theme change and resize. */
+  const fbDial = { cv: null, v: null, e: 0, raf: 0 };
+  const paintFbDial = () => {
+    const cv = fbDial.cv; if (!cv || !cv.isConnected) return;
+    const W = cv.clientWidth, H = cv.clientHeight; if (!W || !H) return;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+    const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+    const root = getComputedStyle(document.documentElement), C = (k) => root.getPropertyValue(k).trim();
+    const T = SC.T.tnps, LO = 50, HI = 100, N = 100, band = (x) => x >= T ? C('--color-ok') : x >= 85 ? C('--color-warn') : C('--color-bad');
+    const mark = getComputedStyle(document.body).color, muted = C('--color-fg-muted') || mark;
+    const cx = W / 2, R = Math.min(W / 2 - 12, H - 22), cy = R + 12, ang = (x) => Math.PI + (x - LO) / (HI - LO) * Math.PI;
+    const v = Math.max(LO, Math.min(HI, fbDial.v)), lit = Math.round((v - LO) / (HI - LO) * N * fbDial.e);
+    ctx.lineCap = 'round';
+    for (let i = 0; i < N; i++) {
+      const x = LO + (i + 0.5) / N * (HI - LO), a = ang(x), major = i % 10 === 0, on = i < lit, r0 = R * (major ? 0.74 : 0.8), c = band(x);
+      ctx.globalAlpha = on ? 1 : 0.2; ctx.strokeStyle = c; ctx.lineWidth = major ? 2.6 : 1.8;
+      ctx.shadowColor = on ? c : 'transparent'; ctx.shadowBlur = on ? 5 : 0;
+      ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0); ctx.lineTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R); ctx.stroke();
+    }
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+    const ta = ang(T); ctx.strokeStyle = mark; ctx.lineWidth = 2.4;
+    ctx.beginPath(); ctx.moveTo(cx + Math.cos(ta) * R * 0.66, cy + Math.sin(ta) * R * 0.66); ctx.lineTo(cx + Math.cos(ta) * (R + 6), cy + Math.sin(ta) * (R + 6)); ctx.stroke();
+    const la = ang(LO + (v - LO) * fbDial.e), dc = band(fbDial.v);
+    ctx.fillStyle = dc; ctx.shadowColor = dc; ctx.shadowBlur = 10;
+    ctx.beginPath(); ctx.arc(cx + Math.cos(la) * R * 0.88, cy + Math.sin(la) * R * 0.88, 4, 0, 7); ctx.fill(); ctx.shadowBlur = 0;
+    ctx.fillStyle = muted; ctx.font = '600 11px system-ui, sans-serif'; ctx.textBaseline = 'top'; ctx.textAlign = 'center';
+    ctx.fillText('50', cx - R * 0.87, cy + 4); ctx.fillText('100', cx + R * 0.87, cy + 4);
+  };
+  new MutationObserver(paintFbDial).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
+  { let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(paintFbDial, 150); }); }
   dash.draw('fbgauge', (el) => {
-    el.replaceChildren(); const rs = fbRows(); if (!rs || !rs.length) return; const t = tnpsOf(rs); if (t == null) return;
-    const ang = (v) => -90 + (Math.max(50, Math.min(100, v)) - 50) / 50 * 180, pt = (a, r) => [100 + r * Math.sin(a * Math.PI / 180), 100 - r * Math.cos(a * Math.PI / 180)];
-    const arc = (a, b, col) => { const [x1, y1] = pt(ang(a), 80), [x2, y2] = pt(ang(b), 80); return `<path d="M${x1.toFixed(1)} ${y1.toFixed(1)} A80 80 0 0 1 ${x2.toFixed(1)} ${y2.toFixed(1)}" stroke="${col}" stroke-width="14" fill="none"/>`; };
-    const [tx1, ty1] = pt(ang(SC.T.tnps), 66), [tx2, ty2] = pt(ang(SC.T.tnps), 94);
-    const box = fbEl('div'); box.innerHTML = `<svg viewBox="0 0 200 118" aria-hidden="true">${arc(50, 85, 'var(--color-bad)')}${arc(85, SC.T.tnps, 'var(--color-warn)')}${arc(SC.T.tnps, 100, 'var(--color-ok)')}
-      <line x1="${tx1.toFixed(1)}" y1="${ty1.toFixed(1)}" x2="${tx2.toFixed(1)}" y2="${ty2.toFixed(1)}" stroke="var(--color-fg)" stroke-width="2"/>
-      <text x="14" y="116" font-size="10" fill="var(--color-fg-muted)">50</text><text x="186" y="116" font-size="10" fill="var(--color-fg-muted)" text-anchor="end">100</text>
-      <g class="needle" style="--a:${ang(t).toFixed(1)}deg"><line x1="100" y1="100" x2="100" y2="30" stroke="var(--color-fg)" stroke-width="3" stroke-linecap="round"/></g>
-      <circle cx="100" cy="100" r="7" fill="var(--color-fg)"/></svg>`;
-    el.appendChild(box.firstElementChild);
+    el.replaceChildren(); cancelAnimationFrame(fbDial.raf); if (fbDial.io) fbDial.io.disconnect();
+    const rs = fbRows(); if (!rs || !rs.length) return; const t = tnpsOf(rs); if (t == null) return;
+    const cv = document.createElement('canvas'); cv.className = 'sc-fbdial'; cv.setAttribute('role', 'img');
+    cv.setAttribute('aria-label', 'Team tNPS ' + t.toFixed(1) + '%, target ' + SC.tgt(SC.T.tnps));
+    el.appendChild(cv); fbDial.cv = cv; fbDial.v = t; fbDial.e = 0;
+    const run = () => {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { fbDial.e = 1; paintFbDial(); return; }
+      const t0 = performance.now();
+      const step = (now) => { const k = Math.min(1, (now - t0) / 1400); fbDial.e = 1 - Math.pow(1 - k, 3); paintFbDial(); if (k < 1 && cv.isConnected) fbDial.raf = requestAnimationFrame(step); };
+      fbDial.raf = requestAnimationFrame(step);
+    };
+    if ('IntersectionObserver' in window) { fbDial.io = new IntersectionObserver((es) => { if (es[0].isIntersecting && cv.clientWidth) { fbDial.io.disconnect(); run(); } }); fbDial.io.observe(cv); } else run();
     const v = fbEl('div', 'val', t.toFixed(1) + '%'); v.style.color = t >= SC.T.tnps ? 'var(--color-ok)' : t >= 85 ? 'var(--color-warn)' : 'var(--color-bad)';
     const cap = fbEl('div', 'cap'); cap.append(fbEl('span', null, 'Team tNPS this month'), document.createTextNode(' · '), fbEl('span', null, 'Target ' + SC.tgt(SC.T.tnps))); el.append(v, cap);
   });
