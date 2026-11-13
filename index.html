@@ -1323,7 +1323,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
       <div class="sc-sec-head">
         <div>
           <h3 class="small">All repeats</h3>
-          <p class="sc-note">Newest first by the date of our visit. Select a row to filter to that tech.</p>
+          <p class="sc-note">Newest first by the date of our visit. Select a column name to sort, or a row to filter to that tech.</p>
         </div>
         <span class="sc-rep-count" data-draw="repcount" data-source="repeats"></span>
       </div>
@@ -3397,12 +3397,21 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   });
   dash.draw('repcount', (el) => { const all = repRows(); if (!all) { el.textContent = ''; return; } const n = repFilter(all).length; el.textContent = n + (n === 1 ? ' repeat' : ' repeats'); });
   dash.draw('replist', (el) => {
-    el.replaceChildren(); const all = repRows(); if (!all) return; const rs = repFilter(all);
+    el.replaceChildren(); const all = repRows(); if (!all) return; const rs = repFilter(all).slice();
     const ac = repAcctCounts(repAll());
-    const cols = [['Our visit', 'l'], ['Tech', 'l']].concat(SC.repAcct ? [['Account', 'l']] : [], [ ['Type', 'l hide-sm'], ['First visit', 'l'], ['Our fix', 'l'], ['Came back for', 'l hide-sm'], ['Next tech’s fix', 'l'], ['Days', '']]);
-    const th = fbEl('thead'), hr = fbEl('tr'); cols.forEach(([t, c]) => { const h = fbEl('th', c); h.appendChild(fbEl('span', 'h', t)); hr.appendChild(h); }); th.appendChild(hr);
+    /* Sortable columns (Dillon, Nov 12): click a header to sort, again to reverse; default is newest visit first. */
+    const cols = [['Our visit', 'l', 'd1'], ['Tech', 'l', 'tech']].concat(SC.repAcct ? [['Account', 'l', 'acct']] : [], [ ['Type', 'l hide-sm', 'type'], ['First visit', 'l', 'job'], ['Our fix', 'l', 'fix1'], ['Came back for', 'l hide-sm', 'why'], ['Next tech’s fix', 'l', 'fix2'], ['Days', '', 'days']]);
+    const so = SC.rep.sort || (SC.rep.sort = { k: 'd1', dir: -1 });
+    const sv = (r, k) => k === 'acct' ? (repAcctOf(r) || '') : k === 'days' ? r.days : String(r[k] || '');
+    rs.sort((a, b) => { const x = sv(a, so.k), y = sv(b, so.k);
+      const c = typeof x === 'number' ? x - y : (!x && y ? 1 : x && !y ? -1 : x.localeCompare(y, undefined, { numeric: true, sensitivity: 'base' }) * so.dir);
+      return (typeof x === 'number' ? c * so.dir : c) || (b.d1 < a.d1 ? -1 : b.d1 > a.d1 ? 1 : 0) || a.tech.localeCompare(b.tech); });
+    const th = fbEl('thead'), hr = fbEl('tr'); cols.forEach(([t, c, k]) => { const h = fbEl('th', c); h.setAttribute('aria-sort', so.k === k ? (so.dir > 0 ? 'ascending' : 'descending') : 'none');
+      const b = fbEl('button', null, t); b.type = 'button';
+      b.onclick = (e) => { e.stopPropagation(); SC.rep.sort = so.k === k ? { k, dir: -so.dir } : { k, dir: (k === 'd1' || k === 'days') ? -1 : 1 }; dash.draw('replist'); };
+      h.appendChild(b); hr.appendChild(h); }); th.appendChild(hr);
     const tb = fbEl('tbody');
-    const cap = SC.rep.listAll ? rs.length : 40;
+    const cap = SC.rep.listAll ? rs.length : 40; // rs is sorted above
     rs.slice(0, cap).forEach((r) => { const tr = fbEl('tr', 'click');
       tr.appendChild(fbEl('td', 'l', fbmd(r.d1))); const tt = fbEl('td', 'l tech', r.tech); if (SC.names && SC.names[r.tech]) tt.title = SC.names[r.tech]; tr.appendChild(tt);
       if (SC.repAcct) { const a = repAcctOf(r), td = fbEl('td', 'l acct'); td.dataset.noTr = '1'; td.appendChild(fbEl('span', 'num', a || '—')); td.addEventListener('click', (e) => e.stopPropagation());
@@ -3681,7 +3690,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     'Most common fix pairs': 'Pares de códigos de reparación más comunes', 'The fix code on our visit, then the fix code the next tech used.': 'El código de reparación de nuestra visita y luego el que usó el siguiente técnico.',
     'From first visit to repeat': 'De la primera visita a la repetición', 'The job types that come back most, the fixes we used on them, and what the next tech fixed.': 'Los tipos de trabajo que más se repiten, los códigos que usamos en ellos y lo que reparó el siguiente técnico.',
     'Month over month': 'Mes a mes', 'Repeats per tech in each fiscal month, and the job type they repeated on most. The current month is still in progress.': 'Repeticiones por técnico en cada mes fiscal y el tipo de trabajo que más repitieron. El mes actual todavía está en curso.',
-    'All repeats': 'Todas las repeticiones', 'Newest first by the date of our visit. Select a row to filter to that tech.': 'Las más recientes primero, por la fecha de nuestra visita. Selecciona una fila para filtrar a ese técnico.',
+    'All repeats': 'Todas las repeticiones', 'Newest first by the date of our visit. Select a row to filter to that tech.': 'Las más recientes primero, por la fecha de nuestra visita. Selecciona una fila para filtrar a ese técnico.', 'Newest first by the date of our visit. Select a column name to sort, or a row to filter to that tech.': 'Las más recientes primero, por la fecha de nuestra visita. Selecciona el nombre de una columna para ordenar, o una fila para filtrar a ese técnico.',
     '0–3 days': '0–3 días', '4–10 days': '4–10 días', '11–20 days': '11–20 días', '21–30 days': '21–30 días',
     'No fix pair shows up more than once.': 'Ningún par de códigos aparece más de una vez.', 'Repeats started as': 'Repeticiones que empezaron como', 'Our fix on those jobs': 'Nuestro código en esos trabajos',
     'Next tech’s fix': 'Código del siguiente técnico', 'Fix pairs that happened more than once': 'Pares de códigos que pasaron más de una vez', 'Their repeats, newest first': 'Sus repeticiones, las más recientes primero',
@@ -3810,7 +3819,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     'Most common fix pairs': 'Pè kòd reparasyon ki pi komen', 'The fix code on our visit, then the fix code the next tech used.': 'Kòd reparasyon nan vizit nou an, epi kòd lòt teknisyen an te itilize apre.',
     'From first visit to repeat': 'Soti nan premye vizit la rive nan repetisyon an', 'The job types that come back most, the fixes we used on them, and what the next tech fixed.': 'Kalite travay ki tounen pi plis, kòd nou te itilize sou yo, ak sa lòt teknisyen an te repare.',
     'Month over month': 'Mwa apre mwa', 'Repeats per tech in each fiscal month, and the job type they repeated on most. The current month is still in progress.': 'Repetisyon pa teknisyen nan chak mwa fiskal, ak kalite travay ki repete pi plis. Mwa sa a poko fini.',
-    'All repeats': 'Tout repetisyon yo', 'Newest first by the date of our visit. Select a row to filter to that tech.': 'Pi resan an an premye, dapre dat vizit nou an. Chwazi yon liy pou wè teknisyen sa a sèlman.',
+    'All repeats': 'Tout repetisyon yo', 'Newest first by the date of our visit. Select a row to filter to that tech.': 'Pi resan an an premye, dapre dat vizit nou an. Chwazi yon liy pou wè teknisyen sa a sèlman.', 'Newest first by the date of our visit. Select a column name to sort, or a row to filter to that tech.': 'Pi resan an an premye, dapre dat vizit nou an. Chwazi non yon kolòn pou triye, oswa yon liy pou wè teknisyen sa a sèlman.',
     '0–3 days': '0–3 jou', '4–10 days': '4–10 jou', '11–20 days': '11–20 jou', '21–30 days': '21–30 jou',
     'No fix pair shows up more than once.': 'Pa gen okenn pè kòd ki parèt plis pase yon fwa.', 'Repeats started as': 'Repetisyon ki te kòmanse kòm', 'Our fix on those jobs': 'Kòd nou sou travay sa yo',
     'Next tech’s fix': 'Kòd lòt teknisyen an', 'Fix pairs that happened more than once': 'Pè kòd ki rive plis pase yon fwa', 'Their repeats, newest first': 'Repetisyon li yo, pi resan an an premye',
