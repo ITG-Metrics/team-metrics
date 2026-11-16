@@ -142,6 +142,18 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
   .sc-h2 { margin: 0; font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); }
   .sc-grid { display: grid; gap: var(--cds-gap-md); grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); }
   .sc-grid.four { grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); }
+  /* Metric explainers (Nov 16) */
+  .sc-explain { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--cds-gap-sm); }
+  .sc-ex { display: flex; align-items: center; gap: 14px; text-align: left; font: inherit; color: var(--color-fg); background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: 14px 16px; cursor: pointer; min-height: 64px; }
+  .sc-ex:hover { border-color: var(--color-fg-muted); }
+  .sc-ex:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
+  .sc-ex[aria-busy="true"] { opacity: .7; cursor: progress; }
+  .sc-ex-play { flex: none; width: 42px; height: 42px; border-radius: 50%; background: #d97757; position: relative; }
+  .sc-ex-play::after { content: ""; position: absolute; left: 16px; top: 12px; border-style: solid; border-width: 9px 0 9px 14px; border-color: transparent transparent transparent #fff; }
+  .sc-ex-t { display: grid; gap: 2px; min-width: 0; }
+  .sc-ex-t b { font-weight: var(--cds-font-weight-medium); }
+  .sc-ex-t small { color: var(--color-fg-muted); }
+  @media (max-width: 640px) { .sc-explain { grid-template-columns: 1fr; } }
   .sc-card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); display: grid; gap: var(--cds-gap-sm); align-content: start; min-width: 0; }
   .sc-card h2, .sc-card h3 { margin: 0; font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); }
   .sc-card h3.small { font-size: var(--cds-font-size-body); }
@@ -975,6 +987,26 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
         <div class="sc-chart" data-draw="trend" data-kpi="ftr" data-source="team_by_period"></div>
       </article>
     </div>
+
+    <div class="sc-explain">
+      <button type="button" class="sc-ex" data-wbx="en" lang="en"><span class="sc-ex-play" aria-hidden="true"></span><span class="sc-ex-t"><b>How your numbers work</b><small>English · about 3 min · all 7 metrics</small></span></button>
+      <button type="button" class="sc-ex" data-wbx="es" lang="es"><span class="sc-ex-play" aria-hidden="true"></span><span class="sc-ex-t"><b>Cómo funcionan tus números</b><small>Español · unos 3 min · las 7 métricas</small></span></button>
+    </div>
+    <script>
+    // Metric explainers (whiteboard players). The script loads on the first tap; the voice and sound are unlocked during that tap.
+    document.addEventListener('click', function (e) {
+      var b = e.target.closest && e.target.closest('[data-wbx]'); if (!b) return;
+      try { if (window.speechSynthesis) { speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } } catch (x) {}
+      try { var AC = window.AudioContext || window.webkitAudioContext; if (AC && !window.__wbxAC) window.__wbxAC = new AC(); if (window.__wbxAC && window.__wbxAC.resume) window.__wbxAC.resume(); } catch (x) {}
+      var lang = b.getAttribute('data-wbx'), go = function () { window.WBX.open(lang, b); };
+      if (window.WBX) return go();
+      b.setAttribute('aria-busy', 'true');
+      var s = document.getElementById('wbx-js');
+      if (!s) { s = document.createElement('script'); s.id = 'wbx-js'; s.src = 'https://itg-metrics.github.io/team-metrics/explainer/wb.js?v=1'; document.head.appendChild(s); }
+      s.addEventListener('load', function () { b.removeAttribute('aria-busy'); go(); }, { once: true });
+      s.addEventListener('error', function () { b.removeAttribute('aria-busy'); var sm = b.querySelector('small'); if (sm) sm.textContent = lang === 'es' ? 'No se pudo cargar. Revisa tu conexión.' : "Couldn't load. Check your connection."; s.remove(); }, { once: true });
+    });
+    </script>
 
     <div>
       <h2 class="sc-h2">What drives FTR and the customer experience</h2>
