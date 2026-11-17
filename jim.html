@@ -954,7 +954,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
         <div class="sc-hero-txt">
           <span class="sc-hero-k"><i></i>tNPS</span>
           <div class="sc-hero-row"><span class="sc-hero-v" data-draw="kpi" data-kpi="tnps" data-source="team_latest" data-field="tnps" data-row="0">—</span>
-          <div class="sc-hero-tags"><span>Target <span data-draw="target" data-kpi="tnps">—</span></span><span class="sc-delta" data-draw="delta" data-kpi="tnps" data-source="team_latest" data-field="d_tnps" data-row="0">—</span></div></div>
+          <div class="sc-hero-tags"><span>Target <span data-draw="target" data-kpi="tnps">—</span></span><span class="sc-delta" data-draw="delta" data-kpi="tnps" data-source="team_latest" data-field="d_tnps" data-row="0">—</span><span class="sc-asof" hidden></span></div></div>
         </div>
         <canvas class="sc-hero-ticks" data-draw="heroticks" data-kpi="tnps" data-source="team_latest" role="img"></canvas>
       </div>
@@ -1415,6 +1415,34 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     };
     apply();
     try { if (typeof window.dash.onData === 'function') window.dash.onData(apply); } catch (e) { console.error('formula switch', e); }
+  })();
+</script>
+<script>
+  /* Nov 17 (Dillon): tNPS for the open fiscal month comes from the Medallia surveys on the Feedback tab, which run
+     about two days ahead of BP-Ontrac. Promoters (9-10), detractors (0-6) and surveys are counted per tech from the
+     month's first day up to the newest survey, replacing BP-Ontrac's counts for the "(to date)" month only, so the
+     Overview, the Techs table and the targets all use them. Closed months, weeks and the last 30 days stay BP-Ontrac.
+     The previous pull is recounted the same way up to its own end date, so the arrows compare like with like.
+     If the surveys are older than the BP-Ontrac pull, BP-Ontrac's numbers are kept. */
+  (function () {
+    const get = (id) => { try { const d = window.dash.data(id); return d && d.status === 'ok' && Array.isArray(d.data) ? d.data : []; } catch (e) { return []; } };
+    const fb = get('feedback'); if (!fb.length) return;
+    const first = fb.reduce((a, r) => (r.date && r.date < a ? r.date : a), '9999'), last = fb.reduce((a, r) => (r.date > a ? r.date : a), '');
+    const tally = (tid, from, to) => { let p = 0, d = 0, s = 0; for (const r of fb) { if (r.tech_id !== tid || !(r.date >= from && r.date <= to)) continue; const v = parseFloat(r.score); if (isNaN(v)) continue; s++; if (v >= 9) p++; else if (v <= 6) d++; } return { p, d, s }; };
+    let used = false;
+    const patch = (rows, upToLast) => {
+      for (const r of rows) {
+        if (!r || r.__fbTnps || !/\(to date\)$/.test(r.period_label || '')) continue;
+        if (first > r.period_start || last < r.period_end) continue;
+        const c = tally(r.tech_id, r.period_start, upToLast ? last : r.period_end);
+        r.tnps_rate_bp = r.tnps_rate; r.tnps_surveys_bp = r.tnps_surveys;
+        r.promoters = String(c.p); r.detractors = String(c.d); r.tnps_surveys = String(c.s);
+        r.tnps_rate = String(c.s ? Math.max(0, Math.round(1000 * (c.p - c.d) / c.s) / 10) : 0);
+        r.__fbTnps = true; if (upToLast) used = true;
+      }
+    };
+    patch(get('metrics'), true); patch(get('prev_pull'), false);
+    if (used) { const [y, m, d] = last.split('-').map(Number); window.__tnpsAsOf = 'Surveys to ' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m - 1] + ' ' + d + ', ' + y; document.querySelectorAll('.sc-asof').forEach((el) => { el.textContent = window.__tnpsAsOf; el.hidden = false; }); }
   })();
 </script>
 <script>
@@ -4093,6 +4121,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     [/^Last jobs in (.+); numbers shown are from then\.$/, (m) => `Dènye travay nan ${labelHT(m[1]) || m[1]}; chif yo soti nan mwa sa a.`],
     [/^Tech (\w+) is at ([\d.]+%) FTR on (\d+) jobs\. They need (\d+) first-time fixes in a row, with no repeats, to reach ([\d.]+%) this month\.$/, (m) => `Teknisyen ${m[1]} gen ${m[2]} FTR sou ${m[3]} travay. Li bezwen ${m[4]} reparasyon premye fwa youn dèyè lòt, san repetisyon, pou rive ${m[5]} mwa sa a.`],
     [/^Tech (\w+) is at ([\d.]+%) FTR on (\d+) jobs, which meets the ([\d.]+%) target\.$/, (m) => `Teknisyen ${m[1]} gen ${m[2]} FTR sou ${m[3]} travay, sa ki rive nan objektif ${m[4]} an.`],
+    [/^Surveys to ([A-Z][a-z]{2} \d{1,2}, \d{4})$/, (m) => `Sondaj jiska ${dateHT(m[1])}`],
     [/^Snapshot of (.+) to (.+), made (.+)\. This copy does not update by itself\.$/, (m) => `Done depi ${dateHT(m[1])} rive ${dateHT(m[2])}, fè ${dateHT(m[3])}. Kopi sa a pa mete tèt li ajou poukont li.`],
     [/^(Tech \w+|Team), (.+?): (.+)$/, (m) => {
       const who = m[1] === 'Team' ? 'Ekip' : m[1].replace('Tech', 'Teknisyen');
@@ -4235,6 +4264,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     [/^Last jobs in (.+); numbers shown are from then\.$/, (m) => `Últimos trabajos en ${label(m[1]) || m[1]}; los números son de ese mes.`],
     [/^Tech (\w+) is at ([\d.]+%) FTR on (\d+) jobs\. They need (\d+) first-time fixes in a row, with no repeats, to reach ([\d.]+%) this month\.$/, (m) => `El técnico ${m[1]} tiene ${m[2]} de FTR en ${m[3]} trabajos. Necesita ${m[4]} reparaciones a la primera seguidas, sin repeticiones, para llegar a ${m[5]} este mes.`],
     [/^Tech (\w+) is at ([\d.]+%) FTR on (\d+) jobs, which meets the ([\d.]+%) target\.$/, (m) => `El técnico ${m[1]} tiene ${m[2]} de FTR en ${m[3]} trabajos, lo que cumple la meta de ${m[4]}.`],
+    [/^Surveys to ([A-Z][a-z]{2} \d{1,2}, \d{4})$/, (m) => `Encuestas al ${date(m[1])}`],
     [/^Snapshot of (.+) to (.+), made (.+)\. This copy does not update by itself\.$/, (m) => `Datos del ${date(m[1])} al ${date(m[2])}, generado el ${date(m[3])}. Esta copia no se actualiza sola.`],
     [/^(Tech \w+|Team), (.+?): (.+)$/, (m) => {
       const who = m[1] === 'Team' ? 'Equipo' : m[1].replace('Tech', 'Técnico');
