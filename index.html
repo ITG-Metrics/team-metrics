@@ -1459,7 +1459,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     heat: 'ftr',
     span: 1,
     tspan: 1,
-    fb: { tech: null, theme: null, kind: 'all' },
+    fb: { tech: null, theme: null, kind: 'all', days: 0 },
     page: 'overview'
   };
 
@@ -2638,6 +2638,11 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     (skip === 'tech' || !SC.fb.tech || r.tech === SC.fb.tech) &&
     (skip === 'kind' || SC.fb.kind === 'all' || r.kind === SC.fb.kind) &&
     (skip === 'theme' || !SC.fb.theme || hasTheme(FB_THEMES.find((t) => t.id === SC.fb.theme), r.comment)));
+  /* Recent surveys (Dillon, Nov 17): All surveys can show just the latest day or the latest 3 days of surveys, counted back
+     from the newest survey date in the data (surveys arrive a day or two late, so "today" would often be empty). */
+  const fbRange = () => { const all = fbRows(); if (!SC.fb.days || !all || !all.length) return null; const to = all[0].date, [y, m, d] = to.split('-').map(Number);
+    return { from: new Date(Date.UTC(y, m - 1, d - (SC.fb.days - 1))).toISOString().slice(0, 10), to }; };
+  const fbRecent = (rs) => { const g = fbRange(); return g ? rs.filter((r) => r.date >= g.from && r.date <= g.to) : rs; };
   const tnpsOf = (rs) => rs.length ? Math.round(1000 * (rs.filter((r) => r.kind === 'pro').length - rs.filter((r) => r.kind === 'det').length) / rs.length) / 10 : null;
   const fbRedraw = () => ['fbsum', 'fbbars', 'fbthemes', 'fbscore', 'fbtitle', 'fblist'].forEach((n) => dash.draw(n));
   const fbmd = (iso) => { const [y, m, d] = iso.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };
@@ -2680,7 +2685,13 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     });
   });
   dash.draw('fbscore', (el) => {
-    el.replaceChildren(); const rs = fbFiltered('kind'); if (!fbRows()) return;
+    el.replaceChildren(); const rs = fbRecent(fbFiltered('kind')); if (!fbRows()) return;
+    const rbox = fbEl('div', 'sc-chips'); rbox.setAttribute('role', 'group'); rbox.setAttribute('aria-label', 'Time range');
+    [[0, 'All time'], [1, '1 day'], [3, '3 days']].forEach(([k, l]) => {
+      const c = fbEl('button', 'sc-chip', l); c.type = 'button'; c.setAttribute('aria-pressed', String((SC.fb.days || 0) === k));
+      c.onclick = () => { SC.fb.days = k; ['fbscore', 'fbtitle', 'fblist'].forEach((n) => dash.draw(n)); }; rbox.appendChild(c);
+    });
+    el.appendChild(rbox);
     const box = fbEl('div', 'sc-chips'); box.setAttribute('role', 'group'); box.setAttribute('aria-label', 'Score');
     [['all', 'All'], ['pro', 'Promoters'], ['pas', 'Passives'], ['det', 'Detractors']].forEach(([k, l]) => {
       const c = fbEl('button', 'sc-chip'); c.type = 'button'; c.setAttribute('aria-pressed', String(SC.fb.kind === k));
@@ -2691,7 +2702,8 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   });
   dash.draw('fbtitle', (el) => {
     const th = FB_THEMES.find((t) => t.id === SC.fb.theme);
-    el.textContent = (SC.fb.tech ? 'Surveys for Tech ' + SC.fb.tech : 'All surveys') + (th ? ' · ' + th.label : '');
+    const g = fbRange();
+    el.textContent = (SC.fb.tech ? 'Surveys for Tech ' + SC.fb.tech : 'All surveys') + (th ? ' · ' + th.label : '') + (g ? ' · ' + (g.from === g.to ? fbmd(g.to) : fbmd(g.from) + ' – ' + fbmd(g.to)) : '');
   });
   /* tNPS gauge (Dillon, Nov 8; tick dial since Nov 12): a half circle of 100 ticks from 50 to 100. Unlit ticks are faintly
      tinted with their band (red under 85, yellow 85 to target, green at target and up); lit ticks glow in their band color
@@ -2767,8 +2779,8 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   });
   dash.draw('fblist', (el) => {
     el.replaceChildren(); if (!fbRows()) return;
-    const rs = fbFiltered().filter((r) => r.comment || r.kind !== 'pro' || SC.fb.allRows);
-    const hidden = fbFiltered().filter((r) => !r.comment && r.kind === 'pro').length;
+    const rs = fbRecent(fbFiltered()).filter((r) => r.comment || r.kind !== 'pro' || SC.fb.allRows);
+    const hidden = fbRecent(fbFiltered()).filter((r) => !r.comment && r.kind === 'pro').length;
     if (hidden > 0) { const more = fbEl('button', 'sc-chip'); more.type = 'button'; more.style.gridColumn = '1 / -1'; more.style.justifySelf = 'start';
       more.textContent = SC.fb.allRows ? 'Hide promoter surveys with no comment' : 'Show ' + hidden + ' promoter surveys with no comment';
       more.onclick = () => { SC.fb.allRows = !SC.fb.allRows; dash.draw('fblist'); }; el.appendChild(more); }
@@ -3871,7 +3883,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     'QCs': 'QC', 'Techs with a QC': 'Técnicos con QC', 'Out of 100': 'De 100', 'TQI alerts': 'Alertas TQI', 'Completed': 'Completado',
     'Job': 'Trabajo', 'Observer': 'Observador', 'Open QC': 'Abrir QC', 'No QCs by other observers in the last 30 days.': 'No hay QC de otros observadores en los últimos 30 días.',
     'No tech met all three targets with at least 40 jobs over the last 30 days.': 'Ningún técnico cumplió las tres metas con al menos 40 trabajos en los últimos 30 días.',
-    'Lines mark where a new fiscal month starts. A week that crosses the 22nd goes with the month that has most of its days.': 'Las líneas marcan dónde empieza un nuevo mes fiscal. Una semana que cruza el día 22 va con el mes que tiene la mayoría de sus días.', 'tNPS, last 3 months': 'tNPS, últimos 3 meses', 'Timeframe': 'Período', 'Weeks are grouped under their fiscal month. A week that crosses the 22nd goes with the month that has most of its days.': 'Las semanas se agrupan bajo su mes fiscal. Una semana que cruza el día 22 va con el mes que tiene la mayoría de sus días.', 'Feedback': 'Comentarios', 'Surveys by tech': 'Encuestas por técnico', 'Number of surveys and tNPS for each tech. Select a tech to see only theirs.': 'Número de encuestas y tNPS de cada técnico. Selecciona un técnico para ver solo las suyas.', 'Newest first, as customers wrote them. Passives and detractors always show, with or without a comment.': 'Las más recientes primero, tal como las escribieron los clientes. Los pasivos y detractores siempre aparecen, con o sin comentario.', 'Surveys': 'Encuestas', 'Passives (7–8)': 'Pasivos (7–8)', 'Detractors (0–6)': 'Detractores (0–6)', 'No comment left': 'Sin comentario', 'Hide promoter surveys with no comment': 'Ocultar encuestas de promotores sin comentario', 'All surveys': 'Todas las encuestas', 'No surveys yet.': 'Aún no hay encuestas.', 'Customer feedback': 'Comentarios de clientes', 'Comments by tech': 'Comentarios por técnico', 'Select a tech to see only their comments.': 'Selecciona un técnico para ver solo sus comentarios.', 'What customers mention': 'Lo que mencionan los clientes', 'How many comments bring up each theme. Select one to filter; matching words are highlighted.': 'Cuántos comentarios mencionan cada tema. Selecciona uno para filtrar; las palabras que coinciden se resaltan.', 'All comments': 'Todos los comentarios', 'Newest first, as customers wrote them.': 'Los más recientes primero, tal como los escribieron los clientes.', 'Comments': 'Comentarios', 'Average score': 'Puntuación promedio', 'Out of 10': 'De 10', 'Promoters (9–10)': 'Promotores (9–10)', 'Passives and detractors (0–8)': 'Pasivos y detractores (0–8)', 'All': 'Todos', 'Promoters': 'Promotores', 'Passives': 'Pasivos', 'Detractors': 'Detractores', 'No comments match.': 'Ningún comentario coincide.', 'No survey comments yet.': 'Aún no hay comentarios de encuestas.', 'Knowledgeable': 'Conocedor', 'Professional': 'Profesional', 'Friendly and pleasant': 'Amable y agradable', 'Helpful': 'Servicial', 'Quick and on time': 'Rápido y puntual', 'Explained things': 'Explicó todo', 'Fixed the problem': 'Resolvió el problema', 'Score': 'Puntuación', 'Slide left to look further back.': 'Desliza a la izquierda para ver más atrás.', '1 month': '1 mes',
+    'Lines mark where a new fiscal month starts. A week that crosses the 22nd goes with the month that has most of its days.': 'Las líneas marcan dónde empieza un nuevo mes fiscal. Una semana que cruza el día 22 va con el mes que tiene la mayoría de sus días.', 'tNPS, last 3 months': 'tNPS, últimos 3 meses', 'Timeframe': 'Período', 'Weeks are grouped under their fiscal month. A week that crosses the 22nd goes with the month that has most of its days.': 'Las semanas se agrupan bajo su mes fiscal. Una semana que cruza el día 22 va con el mes que tiene la mayoría de sus días.', 'Feedback': 'Comentarios', 'Surveys by tech': 'Encuestas por técnico', 'Number of surveys and tNPS for each tech. Select a tech to see only theirs.': 'Número de encuestas y tNPS de cada técnico. Selecciona un técnico para ver solo las suyas.', 'Newest first, as customers wrote them. Passives and detractors always show, with or without a comment.': 'Las más recientes primero, tal como las escribieron los clientes. Los pasivos y detractores siempre aparecen, con o sin comentario.', 'Surveys': 'Encuestas', 'Passives (7–8)': 'Pasivos (7–8)', 'Detractors (0–6)': 'Detractores (0–6)', 'No comment left': 'Sin comentario', 'Hide promoter surveys with no comment': 'Ocultar encuestas de promotores sin comentario', 'All surveys': 'Todas las encuestas', 'No surveys yet.': 'Aún no hay encuestas.', 'All time': 'Todo', '1 day': '1 día', '3 days': '3 días', 'Time range': 'Período', 'Customer feedback': 'Comentarios de clientes', 'Comments by tech': 'Comentarios por técnico', 'Select a tech to see only their comments.': 'Selecciona un técnico para ver solo sus comentarios.', 'What customers mention': 'Lo que mencionan los clientes', 'How many comments bring up each theme. Select one to filter; matching words are highlighted.': 'Cuántos comentarios mencionan cada tema. Selecciona uno para filtrar; las palabras que coinciden se resaltan.', 'All comments': 'Todos los comentarios', 'Newest first, as customers wrote them.': 'Los más recientes primero, tal como los escribieron los clientes.', 'Comments': 'Comentarios', 'Average score': 'Puntuación promedio', 'Out of 10': 'De 10', 'Promoters (9–10)': 'Promotores (9–10)', 'Passives and detractors (0–8)': 'Pasivos y detractores (0–8)', 'All': 'Todos', 'Promoters': 'Promotores', 'Passives': 'Pasivos', 'Detractors': 'Detractores', 'No comments match.': 'Ningún comentario coincide.', 'No survey comments yet.': 'Aún no hay comentarios de encuestas.', 'Knowledgeable': 'Conocedor', 'Professional': 'Profesional', 'Friendly and pleasant': 'Amable y agradable', 'Helpful': 'Servicial', 'Quick and on time': 'Rápido y puntual', 'Explained things': 'Explicó todo', 'Fixed the problem': 'Resolvió el problema', 'Score': 'Puntuación', 'Slide left to look further back.': 'Desliza a la izquierda para ver más atrás.', '1 month': '1 mes',
     'Color theme': 'Tema de color', '⭐ QC showcase': '⭐ Vitrina de QC', "Comcast Field QC's": 'QC de campo de Comcast', 'Photos from Comcast field QCs on our techs in the last 30 days.': 'Fotos de los QC de campo de Comcast a nuestros técnicos en los últimos 30 días.', 'Jobs from our techs that show good craftsmanship and the right standards.': 'Trabajos de nuestros técnicos que muestran buena mano de obra y los estándares correctos.', '🏁 Race for first place': '🏁 Carrera por el primer lugar', 'Last 3 fiscal months ·': 'Últimos 3 meses fiscales ·', 'Not enough techs qualify yet.': 'Todavía no hay suficientes técnicos que califiquen.', 'Race score: 60% FTR, 30% tNPS and 10% tool usage over the last 3 fiscal months. A tech needs at least 40 jobs and 5 surveys to race. It moves with every scorecard update.': 'Puntaje de la carrera: 60% FTR, 30% tNPS y 10% uso de herramienta en los últimos 3 meses fiscales. Un técnico necesita al menos 40 trabajos y 5 encuestas para competir. Se mueve con cada actualización del tablero.', 'BP-Ontrac Team Metrics for Jim’s team, pulled one fiscal month at a time and one week at a time.': 'Métricas de equipo de BP-Ontrac para el equipo de Jim, descargadas por mes fiscal y por semana.', 'Language': 'Idioma', 'Scorecard pages': 'Páginas del tablero', 'no data': 'sin datos'
   };
   const MH = { Jan: 'jan', Feb: 'fev', Mar: 'mas', Apr: 'avr', May: 'me', Jun: 'jen', Jul: 'jiy', Aug: 'out', Sep: 'sep', Oct: 'okt', Nov: 'nov', Dec: 'des' };
@@ -4004,7 +4016,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     'Surveys': 'Sondaj', 'Promoters (9–10)': 'Pwomotè (9–10)', 'Passives (7–8)': 'Pasif (7–8)', 'Detractors (0–6)': 'Detraktè (0–6)',
     'All': 'Tout', 'Promoters': 'Pwomotè', 'Passives': 'Pasif', 'Detractors': 'Detraktè',
     'No comment left': 'Pa gen kòmantè', 'Hide promoter surveys with no comment': 'Kache sondaj pwomotè ki pa gen kòmantè',
-    'All surveys': 'Tout sondaj', 'No surveys yet.': 'Poko gen sondaj.', 'No comments match.': 'Pa gen kòmantè ki koresponn.',
+    'All surveys': 'Tout sondaj', 'All time': 'Tout tan', '1 day': '1 jou', '3 days': '3 jou', 'Time range': 'Peryòd', 'No surveys yet.': 'Poko gen sondaj.', 'No comments match.': 'Pa gen kòmantè ki koresponn.',
     'Knowledgeable': 'Konn travay li', 'Professional': 'Pwofesyonèl', 'Friendly and pleasant': 'Janti e agreyab', 'Helpful': 'Ede anpil',
     'Quick and on time': 'Rapid e alè', 'Explained things': 'Te esplike bagay yo', 'Fixed the problem': 'Te ranje pwoblèm nan', 'Score': 'Nòt',
     'Comments': 'Kòmantè', 'Average score': 'Nòt mwayèn', 'Out of 10': 'Sou 10',
