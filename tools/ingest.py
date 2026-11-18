@@ -101,6 +101,12 @@ def write_rows(cols, rows):
     return f.name
 
 
+def same_period(a, b):
+    # qc_month_period differs only in its sync time when the QCs didn't change
+    strip = lambda rs: [{k: v for k, v in r.items() if k != 'synced'} for r in rs]  # noqa: E731
+    return strip(a) == strip(b)
+
+
 class Page:
     """One data file (data/<team>.js), loaded once, saved once at the end."""
     def __init__(self, team):
@@ -120,6 +126,12 @@ class Page:
         return list(rs[0].keys()) if rs else []
 
     def save(self):
+        # Leave datasets that came out the same alone, so a file already on the site changes nothing.
+        self.sets = {k: v for k, v in self.sets.items() if [dict(r) for r in v[1]] != [dict(r) for r in self.raw.get(k, [])]}
+        if 'qc_month_period' in self.sets and 'qc_month' not in self.sets and same_period(self.sets['qc_month_period'][1], self.raw.get('qc_month_period', [])):
+            del self.sets['qc_month_period']
+        if self.new_stamp and self.stamp.startswith(f'Snapshot of {self.new_stamp[0]} to {self.new_stamp[1]},') and not self.sets:
+            self.new_stamp = None
         if not self.sets and not self.new_stamp:
             return False
         args = []
@@ -398,6 +410,10 @@ def main(inbox):
     for w, p in pages.items():
         if p.save():
             changed.append(f'data/{w}.js')
+    if state.get('market_csv') and state['market_csv'] == S.load(os.path.join(ROOT, 'data', 'market-leaders.js'))[1]['SC_MARKET'][0]:
+        state['market_csv'] = None
+    if state.get('market_changed') and os.path.exists(mpath) and json.load(open(mpath, encoding='utf-8')) == state['market_json']:
+        state['market_changed'] = False
     if state.get('market_csv'):
         p = write_rows(list(state['market_csv'][0].keys()), state['market_csv'])
         S.main([os.path.join(ROOT, 'data', 'market-leaders.js'), f'market={p}'])
