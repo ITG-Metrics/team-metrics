@@ -15,3 +15,12 @@ A data refresh only needs to change the files in `data/`:
 Code changes go straight into index.html and jim.html (they are the current code).
 If the pages are ever rebuilt whole with the old builder, run
 `python3 tools/split_page.py index.html:dillon jim.html:jim` afterwards to split them again.
+
+## Inbox (automatic updates, Nov 17, 2026)
+Drop the Tampermonkey CSVs in `inbox/` on github.com and `.github/workflows/inbox.yml` runs `tools/ingest.py`:
+BP-Ontrac pull → both team pages + market leaders + `data/market.json`; Medallia surveys → Feedback; QC progress → Monthly QCs.
+Each file is checked first; a bad file changes nothing and the reason goes to `inbox/LAST_RUN.md`.
+Repeats (account numbers) and roster files are refused.
+
+`data/market.json` here is the Tech Metrics page's data (market-metrics fetches `/team-metrics/data/market.json`
+and falls back to its own copy). A roster refresh must write this file too.

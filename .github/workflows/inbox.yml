@@ -1,0 +1,50 @@
+# Drop a Tampermonkey CSV in inbox/ (github.com → inbox folder → Add file → Upload files) and this
+# merges it into the site data, removes it from the inbox and publishes. See inbox/README.md.
+name: Inbox → site data
+on:
+  push:
+    branches: [main]
+    paths: ['inbox/**', '!inbox/LAST_RUN.md', '!inbox/README.md']
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+concurrency:
+  group: inbox
+  cancel-in-progress: false
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main   # always the newest data, even if another run just published
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Merge the inbox files into the site data
+        id: ingest
+        run: |
+          set +e
+          python3 tools/ingest.py inbox
+          echo "status=$?" >> "$GITHUB_OUTPUT"
+      - name: Publish
+        run: |
+          git config user.name "inbox bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A data inbox index.html jim.html
+          if git diff --cached --quiet; then echo "nothing to publish"; exit 0; fi
+          git commit -q -m "Inbox: site data from the Tampermonkey files" -m "$(sed -n '3,40p' inbox/LAST_RUN.md)"
+          for i in 1 2 3 4 5; do
+            git pull -q --rebase origin main && git push -q origin HEAD:main && break
+            sleep 5
+          done
+      - name: Ask GitHub Pages to rebuild
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${{ github.repository }}/pages/builds" >/dev/null || echo "Pages will rebuild on its own"
+      - name: Report a file that wasn't used
+        if: steps.ingest.outputs.status != '0'
+        run: |
+          echo "::error::A file in the inbox wasn't used. See inbox/LAST_RUN.md for the reason."
+          exit 1
