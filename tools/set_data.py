@@ -120,6 +120,22 @@ def main(a):
         print(f'{k}: {len(v)} rows')
     if stamp:
         print('stamp:', stamp)
+    bust(path)
+
+
+def bust(path):
+    """Give the pages that load this data file a new ?v= on its address, so browsers fetch the new copy
+    right away instead of showing a cached one (GitHub Pages lets browsers keep files for 10 minutes)."""
+    import re, time, glob
+    name = os.path.basename(path)
+    root = os.path.dirname(os.path.dirname(os.path.abspath(path)))
+    v = str(int(time.time()))
+    for html in glob.glob(os.path.join(root, '*.html')):
+        t = open(html, encoding='utf-8').read()
+        t2 = re.sub(r'(data/' + re.escape(name) + r')(\?v=\d+)?"', r'\1?v=' + v + '"', t)
+        if t2 != t:
+            open(html, 'w', encoding='utf-8').write(t2)
+            print(f'{os.path.basename(html)}: {name}?v={v}')
 
 
 def load_stamp(s):
