@@ -588,6 +588,8 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
 .sc-tc-kpi .v { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .sc-tc-kpi.miss .v { color: var(--color-bad); } .sc-tc-kpi:not(.miss):not(.dim) .v { color: var(--color-ok); }
 .sc-tc-kpi .need { font-size: var(--cds-font-size-caption); line-height: 1.35; }
+.sc-tc-kpi { --hc: var(--color-ok); } .sc-tc-kpi.miss { --hc: var(--color-bad); }
+.sc-tc-ticks { display: block; width: 100%; height: 46px; margin: 2px 0 2px; }
 .sc-tc-kpi.miss .need { color: var(--color-fg); font-weight: 600; }
 .sc-tc-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
 .sc-tc-box h4 { margin: 0 0 6px; font-size: var(--cds-font-size-body); }
@@ -1941,9 +1943,9 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
     const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
-    const card = cv.closest('.sc-hero-card'), cs = getComputedStyle(card), col = cs.getPropertyValue('--hc').trim() || cs.color;
-    const fg = getComputedStyle(document.body).color, muted = getComputedStyle(card.querySelector('.sc-hero-k') || card).color;
-    const T = g.T, lo = T >= 99 ? 95 : T - 10, hi = 100, pos = (x) => (Math.max(lo, Math.min(hi, x)) - lo) / (hi - lo);
+    const card = cv.closest('.sc-hero-card, .sc-tc-kpi'), cs = getComputedStyle(card), col = cs.getPropertyValue('--hc').trim() || cs.color;
+    const fg = getComputedStyle(document.body).color, muted = getComputedStyle(card.querySelector('.sc-hero-k, .k') || card).color;
+    const T = g.T, lo = g.lo != null ? g.lo : (T >= 99 ? 95 : T - 10), hi = 100, pos = (x) => (Math.max(lo, Math.min(hi, x)) - lo) / (hi - lo);
     const N = W >= 340 ? 120 : W >= 200 ? 80 : 40, pad = 6, step = (W - pad * 2) / N, w = Math.max(1.1, Math.min(2.4, step * 0.5));
     const small = W < 200, top = 9, bot = H - (small ? 4 : 18), lit = Math.round(pos(g.v) * N * g.e);
     ctx.lineCap = 'round';
@@ -1967,6 +1969,21 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   { const repaint = () => heroTickGauges.forEach((g) => { if (g.cv.isConnected) paintHeroTicks(g); else heroTickGauges.delete(g); });
     new MutationObserver(repaint).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class', 'lang'] });
     let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(repaint, 150); }); }
+  /* Same tick gauge in Tech detail (Dillon, Nov 19; replaced the glass orbs there): one per KPI box, filled to the tech's value. */
+  SC.tickGauge = (v, T) => {
+    const cv = document.createElement('canvas'); cv.className = 'sc-tc-ticks'; cv.setAttribute('role', 'img'); cv.setAttribute('aria-label', SC.pct(v) + ', target ' + T + '%');
+    const base = T >= 99 ? 95 : T - 10, lo = v < base ? Math.max(0, Math.floor((v - 3) / 5) * 5) : base;   // widen the scale for a tech well under it, so the bar isn't empty
+    const g = { cv, v, T, lo, e: 0, raf: 0 }; heroTickGauges.add(g);
+    const run = () => {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || SC.still) { g.e = 1; paintHeroTicks(g); return; }
+      const t0 = performance.now();
+      const step = (now) => { const p = Math.min(1, (now - t0) / 1400); g.e = 1 - Math.pow(1 - p, 3); paintHeroTicks(g); if (p < 1 && cv.isConnected) g.raf = requestAnimationFrame(step); };
+      g.raf = requestAnimationFrame(step);
+    };
+    requestAnimationFrame(() => { if (!cv.isConnected) return;
+      if ('IntersectionObserver' in window) { const io = new IntersectionObserver((es) => { if (es[0].isIntersecting && cv.clientWidth) { io.disconnect(); run(); } }); io.observe(cv); } else run(); });
+    return cv;
+  };
   dash.draw('heroticks', (cv) => {
     const r = latest(), k = cv.dataset.kpi, card = cv.closest('.sc-hero-card');
     heroTickGauges.forEach((g) => { if (g.cv === cv) { cancelAnimationFrame(g.raf); heroTickGauges.delete(g); } });
@@ -3098,8 +3115,9 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     const kp = fbEl('div', 'sc-tc-kpis');
     const kpi = (k, v, cls, need) => { const d = fbEl('div', 'sc-tc-kpi ' + cls);
       const key = /^FTR/.test(k) ? 'ftr' : /^tNPS/.test(k) ? 'tnps' : /^Tool usage/.test(k) ? 'tu' : null;
-      if (key && !r.away && !(key === 'tnps' && !r.tnps_surveys)) { d.classList.add('has-orb'); d.appendChild(SC.orb(r[key], SC.T[key], 64)); }
-      d.append(fbEl('span', 'k', k), fbEl('span', 'v', v), fbEl('span', 'need', need)); kp.appendChild(d); };
+      d.append(fbEl('span', 'k', k), fbEl('span', 'v', v));
+      if (key && !r.away && !(key === 'tnps' && !r.tnps_surveys) && r[key] != null) d.appendChild(SC.tickGauge(r[key], SC.T[key]));
+      d.append(fbEl('span', 'need', need)); kp.appendChild(d); };
     if (r.away) { kpi('This month', '—', 'dim', 'No jobs this fiscal month. Numbers below are from ' + r.last_label + '.'); }
     else {
       kpi('FTR · target ' + SC.tgt(SC.T.ftr), SC.pct(r.ftr), r.ftr_miss ? 'miss' : '', r.ftr_needed > 0 ? r.ftr_needed + ' first-time fixes in a row, no repeats, to reach ' + SC.tgt(SC.T.ftr) + '.' + (r.ftr_fails != null ? ' ' + r.ftr_fails + (r.ftr_fails === 1 ? ' FTR fail' : ' FTR fails') + ' so far.' : '') : 'On target' + (r.ftr_fails != null ? ' · ' + r.ftr_fails + (r.ftr_fails === 1 ? ' fail' : ' fails') + ' on ' + r.ftr_jobs + ' jobs.' : '.'));
