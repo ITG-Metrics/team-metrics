@@ -273,7 +273,8 @@ def do_ontrac(path, pages, state, log):
                                    if r['tech_id'] in ids}}
         mm['months'] = [months[k] for k in sorted(months)][-6:]
         log.append(f'- {m} market: through {nice(through)}, {len(mm["months"][-1]["techs"])} techs this month.')
-    mj['pulled'] = nice(through)
+    mj['pulled'] = nice(through)   # last day the BP-Ontrac data covers
+    mj['made'] = nice(today())      # day the site was updated (market page: "Data through …, updated …")
     state['market_changed'] = True
 
 
