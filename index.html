@@ -631,6 +631,12 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   .sc-mk-more { margin-top: var(--cds-gap-sm); border-top: 1px solid var(--color-border-line); }
   .sc-mk-more > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; padding: var(--cds-pad-sm) var(--cds-pad-sm); font-size: var(--cds-font-size-caption); font-weight: 600; color: var(--color-fg-muted); }
   .sc-mk-more > summary::-webkit-details-marker { display: none; }
+  .sc-rep-fold > summary { list-style: none; display: flex; align-items: center; gap: 10px; min-height: 28px; }
+  .sc-rep-fold > summary::-webkit-details-marker { display: none; }
+  .sc-rep-fold > summary::before { content: ""; flex: none; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); transition: transform .15s; margin-left: 2px; }
+  .sc-rep-fold[open] > summary::before { transform: rotate(45deg); }
+  .sc-rep-fold > summary h3 { margin: 0; } .sc-rep-fold > summary .sc-rep-count { margin-left: auto; }
+  .sc-rep-fold[open] > summary { margin-bottom: 8px; }
   .sc-mk-more > summary::before { content: ""; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); transition: transform .2s; margin-right: 2px; }
   .sc-mk-more[open] > summary::before { transform: rotate(45deg); }
   .sc-mk-more > summary:hover { color: var(--color-fg); }
@@ -1316,11 +1322,6 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     </div>
     <div class="sc-rep-filters" data-draw="repfilters" data-source="repeats tech_table"></div>
     <div class="sc-qc-sum" data-draw="repsum" data-source="repeats"></div>
-    <article class="sc-card">
-      <h3 class="small">Came back fast: this week</h3>
-      <p class="sc-note" data-draw="repfastnote" data-source="repeats metrics">—</p>
-      <div class="sc-fast" data-draw="repfast" data-source="repeats metrics"></div>
-    </article>
     <div class="sc-grid">
       <article class="sc-card">
         <h3 class="small">Repeat rate by tech</h3>
@@ -1342,16 +1343,17 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
       <p class="sc-note">Repeats per tech in each fiscal month, and the job type they repeated on most. The current month is still in progress.</p>
       <div class="sc-qc-wrap"><table class="sc-table sc-rep-mo" data-draw="repmonths" data-source="repeats tech_table"></table></div>
     </article>
-    <article class="sc-card">
-      <div class="sc-sec-head">
-        <div>
-          <h3 class="small">All repeats</h3>
-          <p class="sc-note">Newest first by the date of our visit. Select a column name to sort, or a row to filter to that tech.</p>
-        </div>
-        <span class="sc-rep-count" data-draw="repcount" data-source="repeats"></span>
-      </div>
+    <!-- Nov 19 (Dillon): All repeats is folded until a tech is selected; Came back fast moved to the bottom, folded until opened. -->
+    <details class="sc-card sc-rep-fold" id="rep-all-fold">
+      <summary><h3 class="small">All repeats</h3><span class="sc-rep-count" data-draw="repcount" data-source="repeats"></span></summary>
+      <p class="sc-note">Newest first by the date of our visit. Select a column name to sort, or a row to filter to that tech.</p>
       <div class="sc-qc-wrap"><table class="sc-table sc-rep-tbl" data-draw="replist" data-source="repeats"></table></div>
-    </article>
+    </details>
+    <details class="sc-card sc-rep-fold">
+      <summary><h3 class="small">Came back fast: this week</h3></summary>
+      <p class="sc-note" data-draw="repfastnote" data-source="repeats metrics">—</p>
+      <div class="sc-fast" data-draw="repfast" data-source="repeats metrics"></div>
+    </details>
   </section>
 
   <details>
@@ -3483,7 +3485,9 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     ms.forEach((m) => { const td = fbEl('td'); td.appendChild(fbEl('b', null, String(rs.filter((r) => r.fm === m && (!SC.rep.tech || r.tech === SC.rep.tech)).length))); tot.appendChild(td); }); tot.appendChild(fbEl('td', 'hide-sm'));
     tb.appendChild(tot); el.append(th, tb);
   });
-  dash.draw('repcount', (el) => { const all = repRows(); if (!all) { el.textContent = ''; return; } const n = repFilter(all).length; el.textContent = n + (n === 1 ? ' repeat' : ' repeats'); });
+  /* All repeats opens by itself when a tech is selected and folds again when the filter is cleared; in between the person can open or close it. */
+  const repFoldSync = () => { const f = document.getElementById('rep-all-fold'); if (!f) return; const t = SC.rep.tech || ''; if (f.dataset.tech !== t) { f.dataset.tech = t; f.open = !!t; } };
+  dash.draw('repcount', (el) => { repFoldSync(); const all = repRows(); if (!all) { el.textContent = ''; return; } const n = repFilter(all).length; el.textContent = n + (n === 1 ? ' repeat' : ' repeats'); });
   dash.draw('replist', (el) => {
     el.replaceChildren(); const all = repRows(); if (!all) return; const rs = repFilter(all).slice();
     const ac = repAcctCounts(repAll());
