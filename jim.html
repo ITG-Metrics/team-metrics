@@ -53,6 +53,13 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .theme-toggle button[aria-pressed="true"] { background: var(--color-fg); color: var(--color-bg); }
 .theme-toggle button:focus-visible { outline: 2px solid var(--cds-chart-axis); outline-offset: 2px; }
 .theme-toggle svg { width: 13px; height: 13px; }
+/* One-button toggles (Dillon, Nov 19): each control shows only its current choice; a tap switches to the other one. */
+.theme-toggle.one button[aria-pressed="false"] { display: none; }
+.theme-toggle.one button[aria-pressed="true"], .theme-toggle.one a { background: none; color: var(--color-fg); font-weight: 600; min-height: 32px; padding: 4px 14px; }
+.theme-toggle.one a { font-size: 12px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; }
+.theme-toggle.one a .team-label { padding: 0; font-weight: 400; }
+.theme-toggle.one:hover { border-color: var(--color-fg-muted); }
+.snap-bar { align-items: center; } .snap-bar .toggles { margin-left: auto; }
 .toggles { display: flex; gap: 8px; flex-wrap: wrap; }
 .team-toggle { align-items: center; }
 .team-toggle .team-label { font-size: 12px; color: var(--color-fg-muted); padding: 0 6px 0 10px; }
@@ -108,14 +115,13 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 <div id="dash-root">
 <div class="snap-bar">
 <p class="snap-stamp">Snapshot of May 22, 2026 to Nov 13, 2026, made Nov 15, 2026. This copy does not update by itself.</p><script>if (window.SC_STAMP) document.currentScript.previousElementSibling.textContent = window.SC_STAMP;</script>
-<nav class="theme-toggle team-toggle" aria-label="Team"><span class="team-label">Team</span><a href="./">Dillon</a><a href="jim.html" aria-current="page">Jim</a></nav>
+<nav class="theme-toggle team-toggle one" aria-label="Team"><a href="./" aria-label="Team: Jim. Switch to Dillon." title="Switch to Dillon"><span class="team-label">Team</span><b>Jim</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></svg></a></nav>
 <div class="toggles">
-<div class="theme-toggle lang-toggle" role="group" aria-label="Language / Idioma / Lang">
+<div class="theme-toggle lang-toggle one" data-one role="group" aria-label="Language / Idioma / Lang">
 <button type="button" data-lang-choice="en" aria-pressed="true">English</button>
 <button type="button" data-lang-choice="es" aria-pressed="false">Español</button>
-<button type="button" data-lang-choice="ht" aria-pressed="false" lang="ht">Kreyòl</button>
 </div>
-<div class="theme-toggle" role="group" aria-label="Color theme">
+<div class="theme-toggle one" data-one role="group" aria-label="Color theme">
 <button type="button" data-theme-choice="light" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Light</button>
 <button type="button" data-theme-choice="dark" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>Dark</button>
 </div>
@@ -125,7 +131,8 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 <style>
   .sc { display: grid; gap: var(--cds-gap-xl); font-family: var(--font-anthropic-sans); max-width: 80rem; margin-inline: auto; }
   .sc-head { display: grid; gap: var(--cds-gap-sm); }
-  .sc-title { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); margin: 0; text-wrap: balance; }
+  .sc-title { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: min(var(--cds-font-size-title), 6.1vw); margin: 0; white-space: nowrap; }
+  html[lang="es"] .sc-title { font-size: min(var(--cds-font-size-title), 5.2vw); }
   .sc-take { margin: 0; color: var(--color-fg-muted); font-size: var(--cds-font-size-body); max-width: 72ch; }
   .sc .sc-take b { color: var(--color-fg); font-weight: 600; }
   .sc-head-top { display: flex; align-items: center; justify-content: space-between; gap: var(--cds-gap-md, 1rem) var(--cds-gap-xl, 2rem); flex-wrap: wrap; }
@@ -898,7 +905,6 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     <div class="sc-head-top">
       <div class="sc-head-text">
         <h1 class="sc-title" id="top">Broward &amp; Dade tech scorecard</h1>
-        <p class="sc-take"><b data-draw="takeok" data-source="team_latest" data-field="techs_all_met" data-row="0">—</b> of <b data-draw="taken" data-source="team_latest" data-field="techs" data-row="0">—</b> techs are meeting all three targets in <b data-draw="takeperiod" data-source="team_latest" data-field="period_label" data-row="0">—</b>. FTR is where the team most often falls short. Fiscal months run from the 22nd to the 21st, and the latest one is still in progress.</p>
       </div>
       <div class="sc-tabs" role="tablist" aria-label="Scorecard pages">
         <button class="sc-tab" role="tab" type="button" id="tab-overview" data-page="overview" aria-selected="true">Overview</button>
@@ -3703,6 +3709,11 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   }));
   mq.addEventListener('change', sync);
   sync();
+  document.querySelectorAll('.theme-toggle[data-one]').forEach((g) => g.addEventListener('click', (e) => {
+    if (g.__busy) return; const cur = e.target.closest('button[aria-pressed="true"]'); if (!cur) return;
+    const other = [...g.querySelectorAll('button')].find((x) => x !== cur); if (!other) return;
+    e.stopPropagation(); g.__busy = true; try { other.click(); } finally { g.__busy = false; }
+  }, true));
 })();
 </script>
 <script>
@@ -4312,7 +4323,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     }
   });
   function setLang(l) {
-    lang = l === 'es' || l === 'ht' ? l : 'en';
+    lang = l === 'es' ? 'es' : 'en';   // Kreyòl removed from the switch (Dillon, Nov 19)
     document.documentElement.lang = lang;
     document.title = lang === 'es' ? 'Tablero de técnicos Broward y Dade' : lang === 'ht' ? 'Tablo teknisyen Broward ak Dade' : 'Broward & Dade Tech Scorecard';
     try { localStorage.setItem('sc-lang', lang); } catch (e) {}
