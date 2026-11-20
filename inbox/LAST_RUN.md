@@ -1,7 +1,7 @@
-# Last inbox run: Nov 19, 2026 10:59 AM (Eastern)
+# Last inbox run: Nov 19, 2026 07:47 PM (Eastern)
 
-## ✅ qc_progress_2026-11-19.csv
-- Dillon: 30 QCs this fiscal month (Oct 22, 2026 – Nov 21, 2026), +0.
-- Jim: 42 QCs this fiscal month (Oct 22, 2026 – Nov 21, 2026), +11.
+## ✅ medallia_surveys_2026-11-19.csv
+- Dillon: surveys through Nov 19, 2026 — 4 new, 158 this fiscal month.
+- Jim: surveys through Nov 19, 2026 — 22 new, 336 this fiscal month.
 
-Changed: data/jim.js
+Changed: data/dillon.js, data/jim.js
