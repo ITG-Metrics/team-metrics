@@ -910,7 +910,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
         <button class="sc-tab" role="tab" type="button" id="tab-overview" data-page="overview" aria-selected="true">Overview</button>
         <button class="sc-tab" role="tab" type="button" id="tab-techs" data-page="techs" aria-selected="false">Techs</button>
         <button class="sc-tab" role="tab" type="button" id="tab-weekly" data-page="weekly" aria-selected="false">Weekly</button>
-        <button class="sc-tab" role="tab" type="button" id="tab-feedback" data-page="feedback" aria-selected="false">Feedback</button>
+        <button class="sc-tab" role="tab" type="button" id="tab-feedback" data-page="feedback" aria-selected="false">TNPS</button>
         <button class="sc-tab" role="tab" type="button" id="tab-qc" data-page="qc" aria-selected="false">QC</button>
         <button class="sc-tab" role="tab" type="button" id="tab-market" data-page="market" aria-selected="false">Market leaders</button>
         <button class="sc-tab" role="tab" type="button" id="tab-repeats" data-page="repeats" aria-selected="false">Repeats</button>
@@ -3074,7 +3074,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
         const m = fbEl('div', 'm'); m.append(fbEl('span', null, fbmd(String(x.date))), fbEl('b', null, s + '/10')); it.appendChild(m);
         const c = String(x.comment || '').trim(); const q = fbEl('div', 'q' + (c ? '' : ' none'), c ? '“' + c.charAt(0).toUpperCase() + c.slice(1) + '”' : 'No comment left'); if (c) q.dataset.noTr = '1'; it.appendChild(q); ls.appendChild(it); });
       if (show.length) fbox.appendChild(ls);
-      if (mine.length > show.length) fbox.appendChild(fbEl('div', 'sc-tc-empty', (mine.length - show.length) + ' more ' + (mine.length - show.length === 1 ? 'survey' : 'surveys') + ' on the Feedback tab.'));
+      if (mine.length > show.length) fbox.appendChild(fbEl('div', 'sc-tc-empty', (mine.length - show.length) + ' more ' + (mine.length - show.length === 1 ? 'survey' : 'surveys') + ' on the TNPS tab.'));
     } else fbox.appendChild(fbEl('div', 'sc-tc-empty', 'Survey data not loaded.'));
     cols.appendChild(fbox);
     /* Their QCs, last 30 days */
@@ -4023,7 +4023,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     [/^Run the tool on every eligible job\. (\d+) missed jobs? so far\.$/, (m) => `Sèvi ak zouti a sou chak travay ki ladan l. ${m[1]} travay rate jiskaprezan.`],
     [/^No jobs this fiscal month\. Numbers below are from (.+)\.$/, (m) => `Pa gen travay mwa fiskal sa a. Chif ki anba yo soti nan ${label(m[1]) || m[1]}.`],
     [/^(\d+) this month · (\d+) promoters · (\d+) passives · (\d+) detractors?$/, (m) => `${m[1]} mwa sa a · ${m[2]} pwomotè · ${m[3]} pasif · ${m[4]} detraktè`],
-    [/^(\d+) more surveys? on the Feedback tab\.$/, (m) => `${m[1]} lòt sondaj nan onglè Kòmantè a.`],
+    [/^(\d+) more surveys? on the TNPS tab\.$/, (m) => `${m[1]} lòt sondaj nan onglè Kòmantè a.`],
     [/^(\d+) QCs?(?: · average ([\d.]+))?$/, (m) => `${m[1]} QC` + (m[2] ? ` · mwayèn ${m[2]}` : '')],
     [/^(\S+) · (\d+) alerts?$/, (m) => `${m[1]} · ${m[2]} alèt`],
 
@@ -4164,7 +4164,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     [/^Run the tool on every eligible job\. (\d+) missed jobs? so far\.$/, (m) => `Usa la herramienta en cada trabajo que aplique. ${m[1]} ${m[1] === '1' ? 'trabajo fallado' : 'trabajos fallados'} hasta ahora.`],
     [/^No jobs this fiscal month\. Numbers below are from (.+)\.$/, (m) => `Sin trabajos este mes fiscal. Los números de abajo son de ${label(m[1]) || m[1]}.`],
     [/^(\d+) this month · (\d+) promoters · (\d+) passives · (\d+) detractors?$/, (m) => `${m[1]} este mes · ${m[2]} promotores · ${m[3]} pasivos · ${m[4]} ${m[4] === '1' ? 'detractor' : 'detractores'}`],
-    [/^(\d+) more surveys? on the Feedback tab\.$/, (m) => `${m[1]} ${m[1] === '1' ? 'encuesta más' : 'encuestas más'} en la pestaña Comentarios.`],
+    [/^(\d+) more surveys? on the TNPS tab\.$/, (m) => `${m[1]} ${m[1] === '1' ? 'encuesta más' : 'encuestas más'} en la pestaña TNPS.`],
     [/^(\d+) QCs?(?: · average ([\d.]+))?$/, (m) => `${m[1]} QC` + (m[2] ? ` · promedio ${m[2]}` : '')],
     [/^(\S+) · (\d+) alerts?$/, (m) => `${m[1]} · ${m[2]} ${m[2] === '1' ? 'alerta' : 'alertas'}`],
 
