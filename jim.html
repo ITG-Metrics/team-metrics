@@ -996,25 +996,6 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
       </article>
     </div>
 
-    <div class="sc-explain">
-      <button type="button" class="sc-ex" data-wbx="en" lang="en"><span class="sc-ex-play" aria-hidden="true"></span><span class="sc-ex-t"><b>How your numbers work</b><small>English · about 3 min · all 7 metrics</small></span></button>
-      <button type="button" class="sc-ex" data-wbx="es" lang="es"><span class="sc-ex-play" aria-hidden="true"></span><span class="sc-ex-t"><b>Cómo funcionan tus números</b><small>Español · unos 3 min · las 7 métricas</small></span></button>
-    </div>
-    <script>
-    // Metric explainers (whiteboard players). The script loads on the first tap; the voice and sound are unlocked during that tap.
-    document.addEventListener('click', function (e) {
-      var b = e.target.closest && e.target.closest('[data-wbx]'); if (!b) return;
-      try { if (window.speechSynthesis) { speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } } catch (x) {}
-      try { var AC = window.AudioContext || window.webkitAudioContext; if (AC && !window.__wbxAC) window.__wbxAC = new AC(); if (window.__wbxAC && window.__wbxAC.resume) window.__wbxAC.resume(); } catch (x) {}
-      var lang = b.getAttribute('data-wbx'), go = function () { window.WBX.open(lang, b); };
-      if (window.WBX) return go();
-      b.setAttribute('aria-busy', 'true');
-      var s = document.getElementById('wbx-js');
-      if (!s) { s = document.createElement('script'); s.id = 'wbx-js'; s.src = 'https://itg-metrics.github.io/team-metrics/explainer/wb.js?v=1'; document.head.appendChild(s); }
-      s.addEventListener('load', function () { b.removeAttribute('aria-busy'); go(); }, { once: true });
-      s.addEventListener('error', function () { b.removeAttribute('aria-busy'); var sm = b.querySelector('small'); if (sm) sm.textContent = lang === 'es' ? 'No se pudo cargar. Revisa tu conexión.' : "Couldn't load. Check your connection."; s.remove(); }, { once: true });
-    });
-    </script>
 
 
     <div class="sc-card">
@@ -1087,7 +1068,6 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
         <div class="sc-pickav"><span data-draw="pickav" data-source="tech_table"></span><select class="dash-select" id="sc-techpick" data-draw="techpick" data-source="tech_table" aria-label="Tech"></select></div>
       </div>
       <div class="sc-tcard" id="sc-tcard" data-draw="techcard" data-source="tech_table tech_periods feedback qc"></div>
-      <div class="sc-trep" id="sc-trep" data-draw="techrep" data-source="repeats tech_table"></div>
       <div class="sc-span" data-draw="span" data-span="span" data-source="tech_periods"></div>
       <div class="sc-facts" data-draw="facts" data-source="tech_table team_now tech_periods"></div>
       <p class="sc-needs" data-draw="needs" data-source="tech_table">—</p>
