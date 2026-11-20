@@ -1078,18 +1078,12 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
       <div class="sc-facts" data-draw="facts" data-source="tech_table team_now tech_periods"></div>
       <p class="sc-needs" data-draw="needs" data-source="tech_table">—</p>
       <p class="sc-needs" data-draw="needsnps" data-source="tech_table"></p>
-      <div class="sc-legend"><span><i data-draw="swatch" data-which="tech"></i>Selected tech</span><span><i data-draw="swatch" data-which="team"></i>Team</span><span><i class="dash"></i>Target</span><span><i class="mark"></i>Coaching note</span></div>
+      <div class="sc-legend"><span><i data-draw="swatch" data-which="tech"></i>Selected tech</span><span><i data-draw="swatch" data-which="team"></i>Team</span><span><i class="dash"></i>Target</span></div>
       <div class="sc-detail-grid">
         <div><h4>FTR</h4><div class="sc-chart sm" data-draw="detail" data-kpi="ftr" data-source="tech_periods team_by_period coaching"></div></div>
         <div><h4>tNPS</h4><div class="sc-chart sm" data-draw="detail" data-kpi="tnps" data-source="tech_periods team_by_period coaching"></div></div>
         <div><h4>Tool usage</h4><div class="sc-chart sm" data-draw="detail" data-kpi="tu" data-source="tech_periods team_by_period coaching"></div></div>
-        <div><h4>Repeat rate</h4><div class="sc-chart sm" data-draw="detail" data-kpi="repeat" data-source="tech_periods team_by_period coaching"></div></div>
-        <div><h4>Rework rate</h4><div class="sc-chart sm" data-draw="detail" data-kpi="rework" data-source="tech_periods team_by_period coaching"></div></div>
-        <div><h4>PHT pass rate</h4><div class="sc-chart sm" data-draw="detail" data-kpi="pht" data-source="tech_periods team_by_period coaching"></div></div>
       </div>
-      <h3 class="small">Coaching notes</h3>
-      <ul class="sc-notes" data-draw="notes" data-source="coaching"></ul>
-      <p class="sc-empty" id="sc-notes-empty" hidden>No coaching notes for this tech yet. Ask Claude to log one, for example: “Log a coaching note for 7189: reviewed drop bonding on 11/6.”</p>
     </div>
   </section>
 
@@ -2316,7 +2310,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     if (!SC.picked) { const t = dash.data('tech_table'); if (t.status === 'ok') SC.picked = defaultPick(t.data); }
     const labels = tb.map((r) => r.period_label);
     const mine = tb.map((p) => { const x = tp.find((r) => r.tech_id === SC.picked && r.period_start === p.period_start); return x ? x[k] : null; });
-    const marks = notesFor(SC.picked).map((n) => { const p = tb.find((q, i) => n.date >= q.period_start && (n.date <= q.period_end || i === tb.length - 1)); return p ? { label: p.period_label, text: n.date + ': ' + n.note } : null; }).filter(Boolean);
+    const marks = []; /* coaching notes removed from the page (Dillon, Nov 19) */ void notesFor(SC.picked).map((n) => { const p = tb.find((q, i) => n.date >= q.period_start && (n.date <= q.period_end || i === tb.length - 1)); return p ? { label: p.period_label, text: n.date + ': ' + n.note } : null; }).filter(Boolean);
     SC.line(el, {
       labels, target: SC.T[k], lowBetter: SC.LOW[k], marks,
       series: [
