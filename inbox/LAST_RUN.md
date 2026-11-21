@@ -1,6 +1,7 @@
-# Last inbox run: Nov 21, 2026 04:58 PM (Eastern)
+# Last inbox run: Nov 21, 2026 05:14 PM (Eastern)
 
-## ❌ ftr_repeats_2026-11-21.csv
-- Not used: this file has customer account numbers, which must never go on GitHub. It was removed from the inbox without being used. Send repeats to Claude instead.
+## ✅ repeats_locked_2026-11-21.json
+- Dillon: 70 repeats through Nov 19, 2026 (3 new, 0 no longer in the report).
+- Jim: 125 repeats through Nov 19, 2026 (6 new, 1 no longer in the report).
 
-Changed: nothing
+Changed: data/dillon.js, data/jim.js
