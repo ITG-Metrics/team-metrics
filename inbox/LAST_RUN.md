@@ -1,7 +1,9 @@
-# Last inbox run: Nov 21, 2026 08:41 AM (Eastern)
+# Last inbox run: Nov 21, 2026 02:19 PM (Eastern)
 
-## ✅ medallia_surveys_2026-11-21.csv
-- Dillon: surveys through Nov 20, 2026 — 8 new, 166 this fiscal month.
-- Jim: surveys through Nov 20, 2026 — 7 new, 343 this fiscal month.
+## ✅ ontrac_pull_through_2026-11-19.csv
+- Dillon: BP-Ontrac through Nov 19, 2026 — 7 month rows, 20 week rows, 7 last-30-day rows.
+- Jim: BP-Ontrac through Nov 19, 2026 — 11 month rows, 32 week rows, 11 last-30-day rows.
+- Broward market: through Nov 19, 2026, 59 techs this month.
+- Dade market: through Nov 19, 2026, 52 techs this month.
 
-Changed: data/dillon.js, data/jim.js
+Changed: data/dillon.js, data/jim.js, data/market-leaders.js, data/market.json
