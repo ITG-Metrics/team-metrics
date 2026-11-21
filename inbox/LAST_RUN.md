@@ -1,7 +1,7 @@
-# Last inbox run: Nov 21, 2026 05:14 PM (Eastern)
+# Last inbox run: Nov 21, 2026 05:22 PM (Eastern)
 
-## ✅ repeats_locked_2026-11-21.json
-- Dillon: 70 repeats through Nov 19, 2026 (3 new, 0 no longer in the report).
-- Jim: 125 repeats through Nov 19, 2026 (6 new, 1 no longer in the report).
+## ✅ qc_progress_2026-11-21.csv
+- Dillon: 30 QCs this fiscal month (Oct 22, 2026 – Nov 21, 2026), +0.
+- Jim: 44 QCs this fiscal month (Oct 22, 2026 – Nov 21, 2026), +2.
 
-Changed: data/dillon.js, data/jim.js
+Changed: data/jim.js
