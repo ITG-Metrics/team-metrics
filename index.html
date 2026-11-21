@@ -843,6 +843,21 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   .sc-hero-v { font-family: var(--font-anthropic-serif); font-size: 46px; line-height: 1; font-variant-numeric: tabular-nums; color: var(--hc, var(--color-fg)); }
   .sc-hero-tags { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12.5px; color: var(--color-fg-muted); font-variant-numeric: tabular-nums; }
   .sc-hero-tags .sc-delta { font-size: inherit; }
+  /* Overview hero tiles open a list of who is missing that metric this fiscal month (Dillon, Nov 21). */
+  .sc-hero-card[data-hero] { cursor: pointer; transition: border-color .15s, transform .15s; }
+  .sc-hero-card[data-hero]:hover { border-color: var(--hc, var(--color-fg-muted)); }
+  .sc-hero-card[data-hero]:focus-visible { outline: 2px solid var(--cds-chart-axis); outline-offset: 2px; }
+  .sc-hero-card .sc-hero-more { font-size: 11.5px; color: var(--color-fg-muted); text-align: right; margin-top: -4px; }
+  .sc-hp-t { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .sc-hp-t th { text-align: right; font-size: 12px; font-weight: 600; color: var(--color-fg-muted); padding: 6px 8px; border-bottom: 1px solid var(--color-border-line); white-space: nowrap; }
+  .sc-hp-t td { text-align: right; padding: 7px 8px; border-bottom: 1px solid var(--color-border-line); white-space: nowrap; }
+  .sc-hp-t th:first-child, .sc-hp-t td:first-child { text-align: left; white-space: normal; }
+  .sc-hp-t td .tw { display: inline-flex; align-items: center; gap: 8px; }
+  .sc-hp-t td .tw b { font-weight: 600; } .sc-hp-t td .tw .nm { color: var(--color-fg-muted); }
+  .sc-hp-t td.bad { color: var(--color-bad); font-weight: 600; } .sc-hp-t td.ok { color: var(--color-ok); font-weight: 600; }
+  .sc-hp-t tfoot td { font-weight: 600; border-bottom: 0; }
+  .sc-hp-none { color: var(--color-fg-muted); padding: 6px 0; }
+  @media (max-width: 34rem) { .sc-hp-t { font-size: 13px; } .sc-hp-t th, .sc-hp-t td { padding: 6px 4px; } .sc-hp-t td .tw .nm { display: none; } .sc-hero-card .sc-hero-more { text-align: center; } }
   .sc-hero-card.good { --hc: var(--color-ok); } .sc-hero-card.near { --hc: #9a7408; } .sc-hero-card.bad { --hc: var(--color-bad); }
   :root[data-theme="dark"] .sc-hero-card.near { --hc: #e3b21f; }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sc-hero-card.near { --hc: #e3b21f; } }
@@ -3762,6 +3777,10 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     'FTR': 'FTR',
     'Share of jobs fixed the first time, with no repeat visit.': 'Porcentaje de trabajos resueltos a la primera, sin visita repetida.',
     'Target': 'Meta', 'On target': 'En meta', 'Below target': 'Debajo de la meta',
+    'Tool usage fails': 'Fallas de uso de herramienta', 'tNPS detractors and passives': 'Detractores y pasivos de tNPS', 'Below the FTR target': 'Debajo de la meta de FTR',
+    'Fails': 'Fallas', 'Detractors': 'Detractores', 'Passives': 'Pasivos', 'Team': 'Equipo', 'Close': 'Cerrar', 'See techs ›': 'Ver técnicos ›',
+    'No tool usage fails this month.': 'Sin fallas de uso de herramienta este mes.', 'No detractors or passives this month.': 'Sin detractores ni pasivos este mes.',
+    'Everyone is at or above the FTR target.': 'Todos están en la meta de FTR o por encima.',
     'What drives FTR and the customer experience': 'Lo que impulsa el FTR y la experiencia del cliente',
     'No company target is set for these, so the trend is what matters. Lower is better for repeats and rework.': 'La empresa no fija metas para estos, así que lo importante es la tendencia. Para repeticiones y retrabajo, más bajo es mejor.',
     'Repeat rate': 'Tasa de repetición',
@@ -4355,6 +4374,81 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   b.addEventListener('click', function () { var smooth = !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); window.scrollTo({ top: 0, behavior: smooth ? 'smooth' : 'auto' }); b.blur(); });
   sync();
 })();
+</script>
+<script>
+  /* Nov 21 (Dillon): press an Overview hero tile to see who is missing that metric in the open fiscal month.
+     Tool usage: techs with any tool usage fail. tNPS: techs with a detractor or passive survey. FTR: techs below 93%.
+     Numbers come from tech_periods, so they match the Techs table (company formulas, Medallia tNPS for the open month). */
+  (function () {
+    const T = { tu: 99.5, tnps: 95, ftr: 93 };
+    const f1 = (v) => (Math.round(v * 10) / 10).toFixed(1) + '%';
+    const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+    let dlg = null;
+    const open = (k) => {
+      const d = window.dash && window.dash.data('tech_periods'); if (!d || d.status !== 'ok' || !d.data.length) return;
+      const last = d.data.reduce((a, r) => r.period_start > a ? r.period_start : a, '');
+      const rows = d.data.filter((r) => r.period_start === last && r.jobs > 0), label = (rows[0] || {}).period_label || '';
+      let title, cols, list, foot = null;
+      if (k === 'tu') {
+        title = 'Tool usage fails'; cols = ['Tech', 'Fails', 'Jobs', 'Tool usage'];
+        list = rows.filter((r) => r.tu_fails_n > 0).sort((a, b) => b.tu_fails_n - a.tu_fails_n || a.tu - b.tu)
+          .map((r) => [r.tech_id, [Math.round(r.tu_fails_n), 'bad'], r.jobs, [f1(r.tu), r.tu < T.tu ? 'bad' : 'ok']]);
+        const fails = rows.reduce((a, r) => a + Math.round(r.tu_fails_n), 0); foot = ['Team', fails, rows.reduce((a, r) => a + r.jobs, 0), ''];
+      } else if (k === 'tnps') {
+        title = 'tNPS detractors and passives'; cols = ['Tech', 'Detractors', 'Passives', 'Surveys', 'tNPS'];
+        list = rows.map((r) => ({ r, pas: Math.max(0, r.tnps_surveys - r.promoters - r.detractors) })).filter((x) => x.r.detractors > 0 || x.pas > 0)
+          .sort((a, b) => a.r.tnps - b.r.tnps || b.r.detractors - a.r.detractors)
+          .map(({ r, pas }) => [r.tech_id, [r.detractors, r.detractors ? 'bad' : ''], pas, r.tnps_surveys, [f1(r.tnps), r.tnps < T.tnps ? 'bad' : 'ok']]);
+        const s = (f) => rows.reduce((a, r) => a + f(r), 0);
+        foot = ['Team', s((r) => r.detractors), s((r) => Math.max(0, r.tnps_surveys - r.promoters - r.detractors)), s((r) => r.tnps_surveys), ''];
+      } else {
+        title = 'Below the FTR target'; cols = ['Tech', 'Repeats', 'Jobs', 'FTR'];
+        list = rows.filter((r) => r.ftr < T.ftr).sort((a, b) => a.ftr - b.ftr)
+          .map((r) => [r.tech_id, [r.ftr_fail, 'bad'], r.jobs, [f1(r.ftr), 'bad']]);
+      }
+      if (!dlg) {
+        dlg = mk('dialog', 'sc-rep-dlg sc-hp-dlg');
+        dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+        document.body.appendChild(dlg);
+      }
+      const hd = mk('div', 'hd'), ht = mk('div'), x = mk('button', 'x', 'Close'); x.type = 'button'; x.addEventListener('click', () => dlg.close());
+      const sub = mk('div', 'sub'); sub.append(mk('span', null, label));
+      sub.append(document.createTextNode(' · '), mk('span', null, 'Target'), document.createTextNode(' ' + T[k] + '%'));
+      ht.append(mk('h3', null, title), sub); hd.append(ht, x);
+      const bd = mk('div', 'bd');
+      if (!list.length) bd.append(mk('p', 'sc-hp-none', k === 'tu' ? 'No tool usage fails this month.' : k === 'tnps' ? 'No detractors or passives this month.' : 'Everyone is at or above the FTR target.'));
+      else {
+        const t = mk('table', 'sc-hp-t'), th = mk('thead'), tr0 = mk('tr'); cols.forEach((c) => tr0.append(mk('th', null, c))); th.append(tr0); t.append(th);
+        const tb = mk('tbody');
+        list.forEach((row) => {
+          const tr = mk('tr');
+          row.forEach((v, i) => {
+            const td = mk('td');
+            if (i === 0) { const w = mk('span', 'tw'); w.append(SC.av(v, 26), mk('b', null, v)); if (SC.names[v]) w.append(mk('span', 'nm', SC.names[v])); td.append(w); }
+            else if (Array.isArray(v)) { td.textContent = v[0]; if (v[1]) td.className = v[1]; }
+            else td.textContent = v;
+            tr.append(td);
+          });
+          tb.append(tr);
+        });
+        t.append(tb);
+        if (foot) { const tf = mk('tfoot'), tr = mk('tr'); foot.forEach((v) => tr.append(mk('td', null, String(v)))); tf.append(tr); t.append(tf); }
+        bd.append(t);
+      }
+      dlg.replaceChildren(hd, bd);
+      if (!dlg.open) dlg.showModal();
+    };
+    const wire = () => {
+      document.querySelectorAll('.sc-hero-card[data-hero]').forEach((c) => {
+        if (c.__hp) return; c.__hp = true;
+        c.setAttribute('role', 'button'); c.setAttribute('tabindex', '0');
+        c.append(mk('div', 'sc-hero-more', 'See techs ›'));
+        c.addEventListener('click', () => open(c.dataset.hero));
+        c.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(c.dataset.hero); } });
+      });
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire); else wire();
+  })();
 </script>
 </body>
 </html>
