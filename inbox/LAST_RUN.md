@@ -1,6 +1,7 @@
-# Last inbox run: Nov 20, 2026 05:49 PM (Eastern)
+# Last inbox run: Nov 21, 2026 08:41 AM (Eastern)
 
-## ❌ ftr_repeats_2026-11-20.csv
-- Not used: this file has customer account numbers, which must never go on GitHub. It was removed from the inbox without being used. Send repeats to Claude instead.
+## ✅ medallia_surveys_2026-11-21.csv
+- Dillon: surveys through Nov 20, 2026 — 8 new, 166 this fiscal month.
+- Jim: surveys through Nov 20, 2026 — 7 new, 343 this fiscal month.
 
-Changed: nothing
+Changed: data/dillon.js, data/jim.js
