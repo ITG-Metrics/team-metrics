@@ -10,6 +10,8 @@ Files it understands (recognized by name):
                                     data/market.json (Tech Metrics page)
   medallia_surveys_<date>*.csv      Medallia tNPS surveys -> both team pages' Feedback
   qc_progress_<date>*.csv           Catalyst QC progress -> both team pages' Monthly QCs
+  repeats_locked_<date>*.json       NSR FTR Detail repeats from the Tampermonkey script 0.2.0+, account numbers
+                                    already locked with the site passcode -> both team pages' Repeats tab
 
 Refused on purpose:
   ftr_repeats_*.csv / anything with an account number column -> customer account numbers must never be
@@ -137,7 +139,12 @@ class Page:
         args = []
         tmp = []
         for k, (cols, rows) in self.sets.items():
-            p = write_rows(cols, rows)
+            if k == 'repeats_lock':   # a JSON list, not CSV rows
+                import tempfile
+                fd, p = tempfile.mkstemp(suffix='.json'); os.close(fd)
+                json.dump(rows, open(p, 'w', encoding='utf-8'))
+            else:
+                p = write_rows(cols, rows)
             tmp.append(p)
             args.append(f'{k}={p}')
         if self.new_stamp:
@@ -356,6 +363,49 @@ def do_qc(path, pages, log):
         log.append(f'- {team}: {len(out)} QCs this fiscal month ({nice(start)} – {nice(end)}), {len(out) - before:+d}.')
 
 
+# ------------------------------------------------------------------ Repeats (locked by the Tampermonkey script)
+REP_COLS = ['rid', 'fm_label', 'fm_end', 'tech_id', 'ftr_type', 'wo1_date', 'wo1_job', 'wo1_fix', 'wo2_reason', 'wo2_fix', 'wo2_date', 'days', 'wo2_job']
+
+
+def do_repeats(path, pages, log):
+    try:
+        f = json.load(open(path, encoding='utf-8-sig'))
+    except Exception:
+        raise Bad('this is not a locked repeats file from the Tampermonkey script (not readable).')
+    if not isinstance(f, dict) or f.get('kind') != 'itg-repeats-locked' or not isinstance(f.get('teams'), dict):
+        raise Bad('this is not a locked repeats file from the Tampermonkey script.')
+    T = {}
+    for who in ('dillon', 'jim'):
+        t = f['teams'].get(who) or {}
+        rows, lk = t.get('repeats'), t.get('lock')
+        if not isinstance(rows, list) or not isinstance(lk, dict) or not all(isinstance(lk.get(k), str) and lk.get(k) for k in ('salt', 'iv', 'ct')):
+            raise Bad(f'{who}: the file is missing its repeats or its lock.')
+        for i, r in enumerate(rows):
+            if not isinstance(r, dict) or list(r.keys()) != REP_COLS or r['rid'] != str(i):
+                raise Bad(f'{who}: row {i + 1} doesn\'t have the expected columns.')
+        if re.search(r'\d{12,}', json.dumps(rows)):
+            raise Bad('a long number (possibly an account number) is in the rows. Nothing was used.')
+        if who == 'dillon' and any(r['tech_id'] in NOT_ON['dillon'] | EXCLUDE for r in rows):
+            raise Bad('Dillon\'s repeats include a tech who isn\'t on his team (7044 or 7026).')
+        T[who] = (rows, {'salt': lk['salt'], 'iv': lk['iv'], 'ct': lk['ct'], 'iter': int(lk.get('iter') or 310000)})
+    key = lambda r: (r['tech_id'], r['wo1_date'], r['wo2_date'], r['wo1_job'], r['wo2_reason'])  # noqa: E731
+    for who, other in (('dillon', 'jim'), ('jim', 'dillon')):
+        rows, lk = T[who]
+        pg, old = pages[who], pages[who].rows('repeats')
+        same_month = bool(rows) and bool(old) and rows[0]['fm_end'] == old[0].get('fm_end')
+        if same_month and len(old) >= 10 and len(rows) < len(old) * 0.6:
+            raise Bad(f'{who.title()}: only {len(rows)} repeats in the file, the site has {len(old)}. The pull looks incomplete.')
+        oth = [dict({k: r[k] for k in REP_COLS[1:]}, rid='o' + r['rid'], team=other.title()) for r in T[other][0]]
+        if [dict(r) for r in rows] != [dict(r) for r in old] or [dict(r) for r in oth] != [dict(r) for r in pg.rows('repeats_other')]:
+            pg.sets['repeats'] = (REP_COLS, rows)
+            pg.sets['repeats_other'] = (REP_COLS[1:] + ['rid', 'team'], oth)
+            pg.sets['repeats_lock'] = (None, [lk])   # a fresh lock only when the rows changed (it's re-salted every pull)
+        ok, nk = {key(r) for r in old} if same_month else set(), {key(r) for r in rows}
+        through = max((r['wo2_date'] for r in rows), default='')
+        log.append(f'- {who.title()}: {len(rows)} repeats' + (f' through {nice(through)}' if through else '') +
+                   (f' ({len(nk - ok)} new, {len(ok - nk)} no longer in the report).' if same_month else ' (new fiscal month).'))
+
+
 # ------------------------------------------------------------------ main
 def main(inbox):
     files = sorted(f for f in glob.glob(os.path.join(inbox, '*')) if os.path.isfile(f) and not os.path.basename(f).upper().startswith(('README', 'LAST_RUN')))
@@ -377,11 +427,18 @@ def main(inbox):
             head = open(f, 'rb').read(4096).decode('utf-8', 'replace').split('\n', 1)[0].lower()
             if low.startswith('ftr_repeats') or 'accountnumber' in head.replace(' ', '') or 'account_number' in head or 'account #' in head:
                 raise Bad('this file has customer account numbers, which must never go on GitHub. It was removed from the '
-                          'inbox without being used. Send repeats to Claude instead.')
+                          'inbox without being used. Use the Tampermonkey repeats button that makes repeats_locked_….json, or send it to Claude.')
             if low.startswith('roster_'):
                 raise Bad('roster files need a person to look over the changes. Send them to Claude.')
+            if low.startswith('repeats_locked') and low.endswith('.json'):
+                do_repeats(f, pages, log)
+                report.append(f'## ✅ {name}')
+                report += log
+                report.append('')
+                os.remove(f)
+                continue
             if not low.endswith('.csv'):
-                raise Bad('only the Tampermonkey CSV files go in the inbox.')
+                raise Bad('only the Tampermonkey CSV files (and repeats_locked_….json) go in the inbox.')
             if low.startswith('ontrac_pull'):
                 snap = (json.dumps({k: p.sets for k, p in pages.items()}, default=str), json.dumps(state, default=str))
                 try:
@@ -396,7 +453,7 @@ def main(inbox):
             elif low.startswith('qc_progress'):
                 do_qc(f, pages, log)
             else:
-                raise Bad('the name doesn\'t match a known file (ontrac_pull_through_…, medallia_surveys_…, qc_progress_…).')
+                raise Bad('the name doesn\'t match a known file (ontrac_pull_through_…, medallia_surveys_…, qc_progress_…, repeats_locked_….json).')
             report.append(f'## ✅ {name}')
             report += log
         except Bad as e:
