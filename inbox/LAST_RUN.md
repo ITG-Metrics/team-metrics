@@ -1,9 +1,6 @@
-# Last inbox run: Nov 21, 2026 02:19 PM (Eastern)
+# Last inbox run: Nov 21, 2026 04:58 PM (Eastern)
 
-## ✅ ontrac_pull_through_2026-11-19.csv
-- Dillon: BP-Ontrac through Nov 19, 2026 — 7 month rows, 20 week rows, 7 last-30-day rows.
-- Jim: BP-Ontrac through Nov 19, 2026 — 11 month rows, 32 week rows, 11 last-30-day rows.
-- Broward market: through Nov 19, 2026, 59 techs this month.
-- Dade market: through Nov 19, 2026, 52 techs this month.
+## ❌ ftr_repeats_2026-11-21.csv
+- Not used: this file has customer account numbers, which must never go on GitHub. It was removed from the inbox without being used. Send repeats to Claude instead.
 
-Changed: data/dillon.js, data/jim.js, data/market-leaders.js, data/market.json
+Changed: nothing
