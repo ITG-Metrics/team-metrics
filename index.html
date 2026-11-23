@@ -832,6 +832,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   .sc-qm-card .tube-row .pc { font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; color: var(--qm-c); font-weight: 600; }
   @media (prefers-reduced-motion: reduce) { .sc-qm-tube .liq .wv, .sc-qm-tube .front, .sc-qm-tube .edge { animation: none !important; } .sc-qm-tube .bub { display: none; } .sc-qm-tube .liq, .sc-qm-tube .edge, .sc-qm-tube .front { transition: none; } }
   /* Overview hero: Tool usage, tNPS and FTR side by side with glass orbs (Nov 11), like the Market Metrics page. */
+  .sc-lastmo { margin: 12px 0 0; padding: 9px 14px; border-radius: 10px; border: 1px solid color-mix(in srgb, #d99a0b 55%, transparent); background: color-mix(in srgb, #d99a0b 14%, transparent); font-size: 13.5px; line-height: 1.4; }
   .sc-hero { display: grid; gap: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
   /* Hero cards: number on top, horizontal tick gauge underneath (Dillon, Nov 12; replaced the glass orbs, same as the market site). */
   .sc-hero-card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: calc(var(--cds-radius) * 1.4); padding: 16px 18px 12px; display: grid; gap: 8px; min-width: 0; }
@@ -966,6 +967,20 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     </section>
     </div>
   </header>
+  <p class="sc-lastmo" id="sc-lastmo" role="note" hidden></p>
+  <script>
+    /* Nov 23 (Dillon): in the first days of a fiscal month the newest month on the page is the one that just closed; say so. */
+    (function () {
+      const el = document.getElementById('sc-lastmo'), rows = (window.SC_RAW && window.SC_RAW.metrics) || [];
+      if (!el || !rows.length) return;
+      const L = rows.reduce((a, r) => (r.period_end > a.period_end ? r : a), rows[0]);
+      const pad = (n) => String(n).padStart(2, '0'), d = new Date(), today = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      if (L.period_end >= today) return;
+      const MO = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], md = (iso) => MO[+iso.slice(5, 7) - 1] + ' ' + (+iso.slice(8, 10));
+      el.textContent = `Showing last month's final results (${String(L.period_label).replace(' (to date)', '')}, ${md(L.period_start)} – ${md(L.period_end)}). This month starts with the next BP-Ontrac pull.`;
+      el.hidden = false;
+    })();
+  </script>
 
   <!-- OVERVIEW -->
   <section class="sc-page" id="page-overview" data-page="overview">
@@ -4153,6 +4168,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     return null;
   };
   const RULES = [
+    [/^Showing last month's final results \((.+)\)\. This month starts with the next BP-Ontrac pull\.$/, (m) => `Se muestran los resultados finales del mes pasado (${m[1]}). Este mes empieza con la próxima descarga de BP-Ontrac.`],
     [/^Team average ([\d.]+)% \((\d+) repeats on ([\d,]+) jobs\)$/, (m) => `Promedio del equipo ${m[1]}% (${m[2]} repeticiones en ${m[3]} trabajos)`],
     [/^(\d+) repeats? of (\d+) jobs$/, (m) => `${m[1]} de ${m[2]} trabajos`],
     [/^Repeats that came back within 0–3 days, with the return visit (\w{3} \d{1,2}) to (\w{3} \d{1,2})\. A red fix code means the next tech closed it with the same code we used\.$/, (m) => `Repeticiones que volvieron en 0–3 días, con la visita de regreso del ${m[1]} al ${m[2]}. Un código en rojo significa que el siguiente técnico lo cerró con el mismo código que usamos.`],
