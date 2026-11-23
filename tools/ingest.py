@@ -37,7 +37,7 @@ import set_data as S  # noqa: E402
 
 TEAMS = {'27746': 'dillon', '28717': 'jim'}
 MARKETS = {'28718': 'Broward', '28716': 'Dade'}
-EXCLUDE = {'7026'}                 # never shown
+EXCLUDE = {'7026', '7189'}         # never shown (7189 Ernst Jourdain termed Nov 23)
 NOT_ON = {'dillon': {'7044'}}      # 7044 moved to Jim's team (Nov 10)
 CHECK = ['total_jobs', 'tnps_surveys', 'ftr_total_jobs', 'ftr_fail_jobs', 'promoters', 'detractors', 'tu_eligible', 'tu_result']
 MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
