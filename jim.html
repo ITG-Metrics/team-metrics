@@ -1421,6 +1421,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     heat: 'ftr',
     span: 1,
     tspan: 1,
+    toff: 0, // Nov 25 (Dillon): the tech table shows ONE fiscal month, picked on its slider (0 = the latest)
     fb: { tech: null, theme: null, kind: 'all', days: 0 },
     page: 'overview'
   };
@@ -2034,6 +2035,12 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     const ps = [...new Set(tp.data.map((r) => r.period_start))].sort();
     return winRows(base, ps.slice(-K));
   };
+  /* The tech table's month (Nov 25): the latest fiscal month is the live table; an earlier one is rebuilt from that month's
+     own numbers, and only techs who worked that month are listed. */
+  const tableMonths = () => { const tp = dash.data('tech_periods'); return tp.status === 'ok' ? [...new Map(tp.data.map((x) => [x.period_start, x.period_label])).entries()].sort((a, b) => a[0] < b[0] ? -1 : 1) : []; };
+  const tableOff = () => { const n = tableMonths().length; return Math.max(0, Math.min(n ? n - 1 : 0, SC.toff || 0)); };
+  const tableAt = (base) => { const off = tableOff(); if (!off) return base; const ms = tableMonths(); return winRows(base, [ms[ms.length - 1 - off][0]]).filter((r) => r.__inWin); };
+  const tableLabel = () => { const off = tableOff(), ms = tableMonths(); return off && ms.length ? ms[ms.length - 1 - off][1] : null; };
   /* #1 finisher of each fiscal month in the last K months (Dillon, Nov 9): tech_id -> month labels they finished 1st.
      The current month uses this month's table; earlier months are ranked from that month's own numbers. */
   const monthLeaders = (base, K) => {
@@ -2059,7 +2066,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
         mix: 'Installs ' + c.install_share + '%, trouble calls ' + c.tc_share + '%, SROs ' + c.sro_share + '%' });
     });
   };
-  dash.draw('tabletitle', (el) => { const K = SC.tspan || 1; el.textContent = K > 1 ? 'Techs, last ' + K + ' months' : 'Techs this fiscal month'; });
+  dash.draw('tabletitle', (el) => { const L = tableLabel(); el.textContent = L ? 'Techs, ' + L : 'Techs this fiscal month'; });
   /* Badges earned this fiscal month (Dillon, Nov 8): worked out from the data on every refresh. */
   SC.badges = (id) => {
     const t = dash.data('tech_table'); if (t.status !== 'ok') return [];
@@ -2106,7 +2113,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     tbody.replaceChildren();
     if (d0.status !== 'ok') return;
     if (!SC.picked || !d0.data.some((r) => r.tech_id === SC.picked)) SC.picked = defaultPick(d0.data);
-    const d = { data: SC.rankTechs(tableRows(d0.data, SC.tspan || 1)) };
+    const d = { data: SC.rankTechs(tableAt(d0.data)) };
     const q = SC.query.trim().toLowerCase(), { col, dir } = SC.sort;
     const rows = d.data.filter((r) => !q || String(r.tech_id).toLowerCase().includes(q)).slice().sort((a, b) => {
       const av = a[col], bv = b[col];
@@ -2115,14 +2122,16 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
       return (dir === 'ascending' ? c : -c) || ((a.rank ?? 999) - (b.rank ?? 999));
     });
     /* Trend arrows: each tech's rate this timeframe vs the same length just before it (the month before, for 1 month). */
-    const tpd = dash.data('tech_periods'), K = SC.tspan || 1;
-    const leaders = K === 1 ? monthLeaders(d0.data, 1) : new Map(); // glow only on this fiscal month's #1, and only when the slider is on this month alone
-    const allPs = tpd.status === 'ok' ? [...new Map(tpd.data.map((x) => [x.period_start, x.period_label])).entries()].sort((a, b) => a[0] < b[0] ? -1 : 1) : [];
+    const tpd = dash.data('tech_periods'), K = 1, OFF = tableOff();
+    const allPs0 = tpd.status === 'ok' ? [...new Map(tpd.data.map((x) => [x.period_start, x.period_label])).entries()].sort((a, b) => a[0] < b[0] ? -1 : 1) : [];
+    const allPs = allPs0.slice(0, allPs0.length - OFF); // months up to the picked one
+    // glow on the picked month's #1
+    const leaders = OFF === 0 ? monthLeaders(d0.data, 1) : (() => { const m = new Map(), top = d.data.find((x) => x.rank === 1); if (top && allPs.length) m.set(top.tech_id, [allPs[allPs.length - 1][1]]); return m; })();
     const prevWin = allPs.slice(-2 * K, -K), prevSet = new Set(prevWin.map((x) => x[0]));
     /* This month alone (Dillon, Nov 11): arrows show the change since the previous metrics update of this month, so techs see at a glance if they're improving.
        Longer timeframes (or no earlier update yet this month) still compare with the same length just before. */
     const ppd = dash.data('prev_periods'), curStart = allPs.length ? allPs[allPs.length - 1][0] : null;
-    const ppRows = K === 1 && ppd.status === 'ok' && Array.isArray(ppd.data) ? ppd.data.filter((x) => x.period_start === curStart) : [];
+    const ppRows = K === 1 && OFF === 0 && ppd.status === 'ok' && Array.isArray(ppd.data) ? ppd.data.filter((x) => x.period_start === curStart) : [];
     const sincePull = ppRows.length > 0, ppEnd = sincePull ? String(ppRows[0].period_end) : '';
     const mdLabel = (iso) => { const [y, m, d] = iso.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };
     const prevLabel = sincePull ? 'the update through ' + mdLabel(ppEnd) : K === 1 && prevWin.length ? prevWin[0][1] : 'the ' + K + ' months before';
@@ -2199,18 +2208,28 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     el.replaceChildren(); el.style.setProperty('--sc-accent', dash.colors[0]);
     const ms = spanMonths(); if (!ms.length) return;
     const key = el.dataset.span || 'span', N = ms.length; SC[key] = Math.min(Math.max(1, SC[key] || 1), N);
-    const redraw = key === 'tspan' ? () => { dash.draw('techrows'); dash.draw('tabletitle'); } : () => dash.draw('facts');
+    const pick = key === 'tspan'; // Nov 25 (Dillon): the table's slider picks one fiscal month, like the market site; the detail slider adds months up
+    if (pick) SC.toff = Math.max(0, Math.min(N - 1, SC.toff || 0));
+    el.classList.toggle('pick', pick);
+    const redraw = pick ? () => { dash.draw('techrows'); dash.draw('tabletitle'); dash.draw('techcard'); } : () => dash.draw('facts');
     const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
-    const top = mk('div', 'top'); const lab = mk('span', 'k', 'Timeframe'); const read = mk('span', 'read');
+    const top = mk('div', 'top'); const lab = mk('span', 'k', pick ? 'Fiscal month' : 'Timeframe'); const read = mk('span', 'read');
     const rTxt = mk('span'), rN = mk('span', 'n'); read.append(rTxt, rN); top.append(lab, read);
     const track = mk('div', 'track'); const rail = mk('div', 'rail'), fill = mk('div', 'fill');
-    const inp = mk('input'); inp.type = 'range'; inp.min = 0; inp.max = N - 1; inp.step = 1; inp.setAttribute('aria-label', 'Timeframe');
+    const inp = mk('input'); inp.type = 'range'; inp.min = 0; inp.max = N - 1; inp.step = 1; inp.setAttribute('aria-label', pick ? 'Fiscal month' : 'Timeframe');
     track.append(rail, fill, inp);
-    const ticks = mk('div', 'ticks'); const tk = ms.map(([, l]) => { const t = mk('span', null, l.slice(0, 3)); ticks.appendChild(t); return t; });
-    const hint = mk('span', 'k', 'Slide left to look further back.');
+    const ticks = mk('div', 'ticks'); const tk = ms.map(([, l], i) => { const t = mk('span', null, l.slice(0, 3)); if (pick) { t.setAttribute('role', 'button'); t.tabIndex = -1; t.title = l; t.onclick = () => { SC.toff = N - 1 - i; place(); redraw(); }; } ticks.appendChild(t); return t; });
+    const hint = mk('span', 'k', pick ? 'Slide or tap a month to see that fiscal month.' : 'Slide left to look further back.');
     el.append(top, track, ticks, hint);
     const place = () => {
       const w = inp.getBoundingClientRect().width || 1, th = 20, pct = (i) => ((th / 2) + (N === 1 ? 0 : i / (N - 1)) * (w - th)) / w * 100;
+      if (pick) {
+        const i = N - 1 - SC.toff; inp.value = i;
+        fill.style.left = pct(i) + '%'; fill.style.right = (100 - pct(i)) + '%';
+        tk.forEach((t, j) => { t.style.left = pct(j) + '%'; t.classList.toggle('on', j === i); });
+        rTxt.textContent = ms[i][1]; rN.textContent = SC.toff === 0 ? 'latest' : SC.toff === 1 ? '1 month back' : SC.toff + ' months back';
+        inp.setAttribute('aria-valuetext', rTxt.textContent); return;
+      }
       const start = N - SC[key]; inp.value = start;
       fill.style.left = pct(start) + '%'; fill.style.right = (100 - pct(N - 1)) + '%';
       tk.forEach((t, i) => { t.style.left = pct(i) + '%'; t.classList.toggle('on', i >= start); });
@@ -2218,7 +2237,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
       rN.textContent = SC[key] === 1 ? '1 month' : SC[key] + ' months';
       inp.setAttribute('aria-valuetext', rTxt.textContent);
     };
-    inp.oninput = () => { SC[key] = N - +inp.value; place(); redraw(); };
+    inp.oninput = () => { if (pick) SC.toff = N - 1 - +inp.value; else SC[key] = N - +inp.value; place(); redraw(); };
     requestAnimationFrame(place); place();
   });
   /* Add a tech's months together and work out the rates from the totals. */
@@ -3067,8 +3086,8 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     const head = fbEl('div', 'sc-tc-head'); head.appendChild(SC.av(id, 64));
     const who = fbEl('div', 'who'); who.append(fbEl('b', null, 'Tech ' + id)); if (SC.names && SC.names[id]) who.append(fbEl('span', 'nm', SC.names[id]));
     const pill = fbEl('span', 'sc-pill ' + (r.away ? '' : r.misses === 0 ? 'ok' : r.misses === 1 ? 'warn' : 'bad'), r.status); pill.style.justifySelf = 'start'; who.append(pill); head.appendChild(who);
-    try { const K = SC.tspan || 1, rows = SC.rankTechs(tableRows(t.data, K)), me = rows.find((x) => x.tech_id === r.tech_id), n = rows.filter((x) => x.rank).length;
-      const rk = fbEl('div', 'rk'); rk.append(fbEl('span', null, K > 1 ? 'Rank, last ' + K + ' months' : 'Rank this month'), fbEl('b', null, me && me.rank ? '#' + me.rank : '—'), fbEl('span', null, me && me.rank ? 'of ' + n + ' techs' : 'not ranked'));
+    try { const L = tableLabel(), rows = SC.rankTechs(tableAt(t.data)), me = rows.find((x) => x.tech_id === r.tech_id), n = rows.filter((x) => x.rank).length;
+      const rk = fbEl('div', 'rk'); rk.append(fbEl('span', null, L ? 'Rank in ' + L : 'Rank this month'), fbEl('b', null, me && me.rank ? '#' + me.rank : '—'), fbEl('span', null, me && me.rank ? 'of ' + n + ' techs' : 'not ranked'));
       head.appendChild(rk); } catch (e) { console.error('techcard rank', e); }
     el.appendChild(head);
     /* What they need this month */
@@ -3836,6 +3855,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     'Source': 'Fuente',
     'BP-Ontrac Team Metrics for the Broward and Dade team, pulled one fiscal month at a time and one week at a time.': 'Métricas de equipo de BP-Ontrac para el equipo Broward y Dade, descargadas por mes fiscal y por semana.',
     'Fiscal month': 'Mes fiscal',
+    'Slide or tap a month to see that fiscal month.': 'Desliza o toca un mes para ver ese mes fiscal.', 'latest': 'el más reciente', '1 month back': '1 mes atrás',
     'The 22nd of one month to the 21st of the next, named for the month it ends in. The latest month runs to the most recent day BP-Ontrac allows.': 'Del 22 de un mes al 21 del siguiente, con el nombre del mes en que termina. El mes más reciente llega hasta el último día que permite BP-Ontrac.',
     'Team totals': 'Totales del equipo',
     'Counts are added across techs before the rate is worked out, so busier techs carry more weight.': 'Los conteos de todos los técnicos se suman antes de calcular la tasa, así que los técnicos con más trabajos pesan más.',
@@ -3996,7 +4016,7 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     'No tech met all three targets with at least 40 jobs over the last 30 days.': 'Pa gen teknisyen ki rive nan twa objektif yo ak omwen 40 travay nan 30 dènye jou yo.',
     'Lines mark where a new fiscal month starts. A week that crosses the 22nd goes with the month that has most of its days.': 'Liy yo montre kote yon nouvo mwa fiskal kòmanse. Yon semèn ki travèse 22 a ale ak mwa ki gen plis nan jou li yo.',
     'tNPS, last 3 months': 'tNPS, 3 dènye mwa', 'Timeframe': 'Peryòd', 'Weeks are grouped under their fiscal month. A week that crosses the 22nd goes with the month that has most of its days.': 'Semèn yo gwoupe anba mwa fiskal yo. Yon semèn ki travèse 22 a ale ak mwa ki gen plis nan jou li yo.',
-    'Slide left to look further back.': 'Glise sou bò goch pou gade pi lwen dèyè.', '1 month': '1 mwa',
+    'Slide left to look further back.': 'Glise sou bò goch pou gade pi lwen dèyè.', 'Slide or tap a month to see that fiscal month.': 'Glise oswa peze yon mwa pou wè mwa fiskal sa a.', 'latest': 'dènye a', '1 month back': '1 mwa anvan', '1 month': '1 mwa',
     'Customer feedback': 'Kòmantè kliyan yo', 'Surveys by tech': 'Sondaj pa teknisyen',
     'Number of surveys and tNPS for each tech. Select a tech to see only theirs.': 'Kantite sondaj ak tNPS pou chak teknisyen. Chwazi yon teknisyen pou wè sèlman pa l yo.',
     'What customers mention': 'Sa kliyan yo pale de li',
