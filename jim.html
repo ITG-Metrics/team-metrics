@@ -72,7 +72,7 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 [hidden] { display: none !important; }
 </style>
 <script src="https://itg-metrics.github.io/team-metrics/vendor/d3.min.js"></script>
-<script src="https://itg-metrics.github.io/team-metrics/data/market-leaders.js?v=1795620753"></script><script src="https://itg-metrics.github.io/team-metrics/data/jim.js?v=1795620753"></script><script>
+<script src="https://itg-metrics.github.io/team-metrics/data/market-leaders.js?v=1795632064"></script><script src="https://itg-metrics.github.io/team-metrics/data/jim.js?v=1795632064"></script><script>
 (function () {
   const RAW = Object.assign({}, window.SC_RAW, { market: window.SC_MARKET || [] });
   const calcs = {}, draws = {}, onDatas = [], cache = {};
@@ -261,6 +261,15 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
   .sc-span .ticks { position: relative; height: 16px; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
   .sc-span .ticks span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
   .sc-span .ticks span.on { color: var(--color-fg); font-weight: var(--cds-font-weight-medium); }
+  /* Fiscal month picker (Nov 25), the market site's look: one tick block per month, the picked one lit */
+  .sc-span .picks { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; margin-top: 4px; }
+  .sc-span .picks button { display: grid; gap: 6px; justify-items: center; padding: 2px 0 4px; min-height: 44px; background: none; border: 0; box-shadow: none; font: inherit; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); cursor: pointer; white-space: nowrap; }
+  .sc-span .picks .blk { display: block; width: 100%; height: 26px; border-radius: 3px; background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--color-fg) 22%, transparent) 0 2px, transparent 2px 5px); }
+  .sc-span .picks button:hover .blk { background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--color-fg) 45%, transparent) 0 2px, transparent 2px 5px); }
+  .sc-span .picks button.on { color: var(--color-fg); font-weight: var(--cds-font-weight-medium); }
+  .sc-span .picks button.on .blk { background: repeating-linear-gradient(90deg, var(--sc-accent) 0 2px, transparent 2px 5px); filter: drop-shadow(0 0 5px var(--sc-accent)); }
+  .sc-span .picks button:focus-visible { outline: 2px solid var(--sc-accent); outline-offset: 2px; border-radius: 6px; }
+  @media (max-width: 44rem) { .sc-span .picks .fm { display: none; } .sc-span .picks { gap: 4px; } }
   .sc-qc-sum { display: grid; gap: var(--cds-gap-sm); grid-template-columns: repeat(4, minmax(0, 1fr)); }
   @media (max-width: 40rem) { .sc-qc-sum { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   .sc-qc-sum .sc-tile .v { font-size: calc(var(--cds-font-size-title) * .8); }
@@ -2213,6 +2222,23 @@ html[lang="es"] .sc-l-es, html[lang="ht"] .sc-l-ht { display: inline; }
     el.classList.toggle('pick', pick);
     const redraw = pick ? () => { dash.draw('techrows'); dash.draw('tabletitle'); dash.draw('techcard'); } : () => dash.draw('facts');
     const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+    if (pick) {
+      /* Nov 25 (Dillon): the table's month is a click selector in the market site's style: one tick block per fiscal month,
+         only the picked one lit. Arrow keys move between months. */
+      const top = mk('div', 'top'), read = mk('span', 'read'), rTxt = mk('span'), rN = mk('span', 'n'); read.append(rTxt, rN); top.append(mk('span', 'k', 'Fiscal month'), read);
+      const row = mk('div', 'picks'); row.setAttribute('role', 'radiogroup'); row.setAttribute('aria-label', 'Fiscal month');
+      const btns = ms.map(([, l], i) => {
+        const b = mk('button'); b.type = 'button'; b.setAttribute('role', 'radio'); b.title = l;
+        const short = l.replace(/ \(to date\)$/, ''), nm = mk('span', 'nm', short.replace(/ FM$/, '')), fm = mk('span', 'fm', / FM$/.test(short) ? ' FM' : '');
+        nm.appendChild(fm); b.append(mk('i', 'blk'), nm);
+        b.onclick = () => { SC.toff = N - 1 - i; paint(); redraw(); };
+        row.appendChild(b); return b;
+      });
+      row.onkeydown = (e) => { const d = e.key === 'ArrowRight' ? -1 : e.key === 'ArrowLeft' ? 1 : 0; if (!d) return; e.preventDefault(); SC.toff = Math.max(0, Math.min(N - 1, SC.toff + d)); paint(); redraw(); btns[N - 1 - SC.toff].focus(); };
+      const paint = () => { const i = N - 1 - SC.toff; btns.forEach((b, j) => { b.classList.toggle('on', j === i); b.setAttribute('aria-checked', String(j === i)); b.tabIndex = j === i ? 0 : -1; });
+        rTxt.textContent = ms[i][1]; rN.textContent = SC.toff === 0 ? 'latest' : SC.toff === 1 ? '1 month back' : SC.toff + ' months back'; };
+      el.append(top, row); paint(); return;
+    }
     const top = mk('div', 'top'); const lab = mk('span', 'k', pick ? 'Fiscal month' : 'Timeframe'); const read = mk('span', 'read');
     const rTxt = mk('span'), rN = mk('span', 'n'); read.append(rTxt, rN); top.append(lab, read);
     const track = mk('div', 'track'); const rail = mk('div', 'rail'), fill = mk('div', 'fill');
